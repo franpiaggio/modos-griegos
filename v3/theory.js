@@ -48,6 +48,7 @@ const pc = (s, f) => (OPEN_PC[s] + f) % 12;
 export const midiOf = (s, f) => OPEN_MIDI[s] + f;
 
 // Mueve las 7 figuras de Do mayor a otra tonalidad, manteniendo cada ventana entre los trastes 1 y 12.
+// El orden es siempre el de las figuras (posición 1 a 7), no el de los trastes.
 function majorPositions(parentPc) {
   return MAJOR7_C.map((p) => {
     let s = p.start + parentPc;
@@ -55,7 +56,7 @@ function majorPositions(parentPc) {
     while (s < 1) s += 12;
     const d = s - p.start;
     return { start: s, notes: p.notes.map(([st, f, fg]) => [st, f + d, fg]) };
-  }).sort((a, b) => a.start - b.start);
+  });
 }
 
 // Digitación sugerida para un arpegio dentro de una ventana de 5 trastes (un dedo por traste).
