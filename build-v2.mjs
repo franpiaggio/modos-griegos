@@ -69,10 +69,10 @@ const LEGEND_RIGHT = k(693);
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 // ---- Dibujo ----
-function marker(kind, color, x, y, label, big) {
+function marker(kind, color, x, y, label, big, vary) {
   const out = [];
   if (kind === 'tonic') {
-    out.push(`<circle cx="${x}" cy="${y}" r="${big ? 15.2 : 14.3}" fill="${color}"/>`);
+    out.push(`<circle cx="${x}" cy="${y}" r="${big ? 15.2 : 14.3}" fill="${color}"${vary ? ` class="tn" style="--c:${color}"` : ''}/>`);
     if (label != null) out.push(`<text x="${x}" y="${y + 4.6}" class="dn" fill="#fff">${label}</text>`);
   } else if (kind === 'square') {
     const s = big ? 26.2 : 25.2;
@@ -114,7 +114,7 @@ function diagram(page, d, pos) {
     const cell = f - pos.start;
     const x = (edges[cell] + edges[cell + 1]) / 2 + 0.5;
     const [kind, color] = markFor(page, s, f);
-    out.push(marker(kind, color, x, ys[s - 1], finger, false));
+    out.push(marker(kind, color, x, ys[s - 1], finger, false, page.vary));
   });
   return out.join('\n');
 }
@@ -136,7 +136,7 @@ function neck(page) {
   [...seen].forEach((key) => {
     const [s, f] = key.split(':').map(Number);
     const [kind, color] = markFor(page, s, f);
-    out.push(marker(kind, color, NECK.xs[6 - s], neckCellY(f), null, true));
+    out.push(marker(kind, color, NECK.xs[6 - s], neckCellY(f), null, true, page.vary));
   });
   return out.join('\n');
 }
@@ -150,9 +150,9 @@ function header(page) {
   page.legend.forEach((l) => {
     out.push(`<g class="li">`);
     if (l.kind === 'tonic') {
-      out.push(`<circle cx="13.25" cy="${cy}" r="13.25" fill="${l.color}"/>`);
+      out.push(`<circle cx="13.25" cy="${cy}" r="13.25" fill="${l.color}"${page.vary ? ` class="tn" style="--c:${l.color}"` : ''}/>`);
       out.push(`<text x="13.25" y="${cy + 5}" class="lx" fill="#fff">X</text>`);
-      out.push(`<text x="31.6" y="${cy + 6.2}" class="lg" fill="${l.color}">${esc(l.text)}</text>`);
+      out.push(`<text x="31.6" y="${cy + 6.2}" class="lg${page.vary ? ' tn' : ''}"${page.vary ? ` style="--c:${l.color}"` : ''} fill="${l.color}">${esc(l.text)}</text>`);
     } else {
       out.push(`<rect x="0.75" y="${cy - 10.35}" width="20.5" height="20.5" fill="none" stroke="${l.color}" stroke-width="1.5"/>`);
       out.push(`<text x="11" y="${cy + 5}" class="lx" fill="${l.color}">X</text>`);
@@ -199,9 +199,13 @@ ${toolbarCss}
   .title { font-family: ${F.title}; font-size: 22.6px; fill: #111; }
   .lg { font-family: ${F.legend}; font-size: 13.4px; }
   .lx { font-family: ${F.legend}; font-size: 14px; text-anchor: middle; }
+  .tn { fill: var(--c); }
+  body.negro .tn { fill: ${C.black}; }
+  body.negro .toolbar .tabs a[data-mode] { --dot: ${C.black} !important; }
 </style>
 </head>
 <body>
+<script>document.body.className = new URLSearchParams(location.search).get('v') === 'colores' ? 'colores' : 'negro';</script>
 ${toolbarHtml({ pages, pdf, subtitle: 'Versión 2 · 7 posiciones', variants: other })}
 ${pages.map(page).join('\n')}
 <script>
@@ -232,16 +236,18 @@ const reference = {
   positions: MAJOR7,
 };
 const modePages = (colorOf) => MODES.map((m) => ({
-  id: m.id, dot: colorOf(m), nav: m.name, title: ['Modo', m.name],
+  id: m.id, dot: colorOf(m), vary: true, nav: m.name, title: ['Modo', m.name],
   circle: { note: m.note, color: colorOf(m) },
   legend: [{ kind: 'tonic', color: colorOf(m), text: `Tónica ${m.nombre}` }],
   positions: MAJOR7,
 }));
 
 mkdirSync(new URL('./v2/', import.meta.url), { recursive: true });
-const negro = [reference, ...modePages(() => C.black)];
-const colores = [reference, ...modePages((m) => m.color)];
-const variants = (on) => [{ href: 'index.html', label: 'Tónica negra', on: on === 0 }, { href: 'colores.html', label: 'Color por modo', on: on === 1 }];
-writeFileSync(new URL('./v2/index.html', import.meta.url), html(negro, 'modos-tonica-negra.pdf', variants(0)));
-writeFileSync(new URL('./v2/colores.html', import.meta.url), html(colores, 'modos-colores.pdf', variants(1)));
-console.log('v2: index.html y colores.html,', negro.length, 'páginas cada una');
+const pages = [reference, ...modePages((m) => m.color)];
+const PDFS = { negro: 'modos-tonica-negra.pdf', colores: 'modos-colores.pdf' };
+const variants = [{ v: 'negro', label: 'Tónica negra', pdf: PDFS.negro }, { v: 'colores', label: 'Color por modo', pdf: PDFS.colores }];
+writeFileSync(new URL('./v2/index.html', import.meta.url), html(pages, PDFS.negro, variants));
+// Enlace viejo: redirige a la variante de colores
+writeFileSync(new URL('./v2/colores.html', import.meta.url), `<!doctype html><meta charset="utf-8"><title>Modos griegos</title><script>location.replace('index.html?v=colores' + location.hash)</script><a href="index.html?v=colores">Ir a la versión de colores</a>
+`);
+console.log('v2: index.html (2 variantes),', pages.length, 'páginas');

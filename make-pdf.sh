@@ -8,5 +8,5 @@ pdf() { "$CHROME" --headless=new --disable-gpu --no-pdf-header-footer --virtual-
 node build.mjs
 node build-v2.mjs
 pdf index.html modos-griegos.pdf
-pdf v2/index.html v2/modos-tonica-negra.pdf
-pdf v2/colores.html v2/modos-colores.pdf
+pdf "v2/index.html?v=negro" v2/modos-tonica-negra.pdf
+pdf "v2/index.html?v=colores" v2/modos-colores.pdf

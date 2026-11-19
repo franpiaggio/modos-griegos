@@ -33,15 +33,15 @@
   .toolbar .btn.primary { background: #1b1b1f; border-color: #1b1b1f; color: #fff; }
   .toolbar .btn.primary:hover { background: #2d2d33; }
   .toolbar .switch { display: inline-flex; padding: 3px; background: #f1f1f3; border-radius: 10px; }
-  .toolbar .switch a { padding: 6px 10px; border-radius: 8px; color: #5b5b66; text-decoration: none; font-size: 13px; white-space: nowrap; }
-  .toolbar .switch a.on { background: #fff; color: #1b1b1f; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .toolbar .switch button { border: 0; background: none; font: inherit; cursor: pointer; padding: 6px 10px; border-radius: 8px; color: #5b5b66; text-decoration: none; font-size: 13px; white-space: nowrap; }
+  .toolbar .switch button.on { background: #fff; color: #1b1b1f; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
   .toolbar :focus-visible { outline: 2px solid #2C6DB5; outline-offset: 2px; }
   @media (max-width: 1180px) { .toolbar .btn .label { display: none; } .toolbar .btn { padding: 0 10px; } }
   @media (max-width: 900px) {
     .toolbar .row { flex-wrap: wrap; gap: 10px; }
     .toolbar .brand { flex: 1 1 auto; }
     .toolbar .switch { order: 3; flex-basis: 100%; }
-    .toolbar .switch a { flex: 1; text-align: center; }
+    .toolbar .switch button { flex: 1; text-align: center; }
     .toolbar .tabs { order: 4; flex-basis: 100%; }
   }
   @media print { .toolbar { display: none !important; } }
@@ -71,7 +71,7 @@
 <div class="tabs"><a href="#pentatonica" class="on">Pentatónica</a><a href="#jonico">Jónico</a><a href="#dorico">Dórico</a><a href="#frigio">Frigio</a><a href="#lidio">Lidio</a><a href="#mixolidio">Mixolidio</a><a href="#eolico">Eólico</a><a href="#locrio">Locrio</a></div>
 
 <div class="actions">
-<a class="btn primary" href="modos-griegos.pdf" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg><span class="label">PDF</span></a>
+<a class="btn primary" id="pdf" href="modos-griegos.pdf" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg><span class="label">PDF</span></a>
 <button class="btn" type="button" onclick="window.print()" title="Imprimir"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M7 14h10v6H7z"/></svg><span class="label">Imprimir</span></button>
 </div></div></nav>
 <section class="page" id="pentatonica"><svg viewBox="0 0 1240 1754" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Posición Pentatónica">
@@ -2199,6 +2199,18 @@
 <script>
 
 (() => {
+  const btns = [...document.querySelectorAll('.toolbar .switch button')];
+  if (!btns.length) return;
+  const set = (v) => {
+    document.body.className = v;
+    btns.forEach((b) => b.classList.toggle('on', b.dataset.v === v));
+    const b = btns.find((x) => x.dataset.v === v); if (b) document.getElementById('pdf').href = b.dataset.pdf;
+    const u = new URL(location.href); u.searchParams.set('v', v); history.replaceState(null, '', u);
+  };
+  btns.forEach((b) => b.addEventListener('click', () => set(b.dataset.v)));
+  set(document.body.className || btns[0].dataset.v);
+})();
+(() => {
   const links = [...document.querySelectorAll('.toolbar .tabs a')];
   const byId = new Map(links.map((a) => [a.getAttribute('href').slice(1), a]));
   const io = new IntersectionObserver((entries) => {
@@ -2206,7 +2218,6 @@
       if (!e.isIntersecting) return;
       links.forEach((a) => a.classList.remove('on'));
       const a = byId.get(e.target.id);
-      document.querySelectorAll('.toolbar .switch a').forEach((v) => { v.href = v.getAttribute('href').split('#')[0] + '#' + e.target.id; });
       if (a) { a.classList.add('on'); const t = a.parentElement; t.scrollTo({ left: a.offsetLeft - t.clientWidth / 2 + a.offsetWidth / 2, behavior: 'smooth' }); }
     });
   }, { rootMargin: '-45% 0px -50% 0px' });

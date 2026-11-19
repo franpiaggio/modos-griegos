@@ -25,6 +25,6 @@ Sigue el modelo "Posición Escala Mayor": 7 posiciones por página. La primera p
 referencia; después vienen los 7 modos con las mismas figuras y solo la tónica del modo marcada.
 
 - `v2/index.html` y `v2/modos-tonica-negra.pdf`: la tónica es negra en todos los modos.
-- `v2/colores.html` y `v2/modos-colores.pdf`: cada modo tiene su color.
+- `v2/index.html?v=colores` y `v2/modos-colores.pdf`: cada modo tiene su color. El selector de la barra cambia de variante sin recargar.
 
 Los datos están en `data-v2.mjs` y la geometría en `build-v2.mjs`.

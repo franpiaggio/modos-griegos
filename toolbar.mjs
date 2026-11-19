@@ -29,15 +29,15 @@ export const toolbarCss = `
   .toolbar .btn.primary { background: #1b1b1f; border-color: #1b1b1f; color: #fff; }
   .toolbar .btn.primary:hover { background: #2d2d33; }
   .toolbar .switch { display: inline-flex; padding: 3px; background: #f1f1f3; border-radius: 10px; }
-  .toolbar .switch a { padding: 6px 10px; border-radius: 8px; color: #5b5b66; text-decoration: none; font-size: 13px; white-space: nowrap; }
-  .toolbar .switch a.on { background: #fff; color: #1b1b1f; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .toolbar .switch button { border: 0; background: none; font: inherit; cursor: pointer; padding: 6px 10px; border-radius: 8px; color: #5b5b66; text-decoration: none; font-size: 13px; white-space: nowrap; }
+  .toolbar .switch button.on { background: #fff; color: #1b1b1f; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
   .toolbar :focus-visible { outline: 2px solid #2C6DB5; outline-offset: 2px; }
   @media (max-width: 1180px) { .toolbar .btn .label { display: none; } .toolbar .btn { padding: 0 10px; } }
   @media (max-width: 900px) {
     .toolbar .row { flex-wrap: wrap; gap: 10px; }
     .toolbar .brand { flex: 1 1 auto; }
     .toolbar .switch { order: 3; flex-basis: 100%; }
-    .toolbar .switch a { flex: 1; text-align: center; }
+    .toolbar .switch button { flex: 1; text-align: center; }
     .toolbar .tabs { order: 4; flex-basis: 100%; }
   }
   @media print { .toolbar { display: none !important; } }
@@ -48,20 +48,32 @@ export const toolbarCss = `
 // pages: [{id, nav, dot?}], pdf: href, subtitle: texto chico, variants: [{href, label, on}] (opcional)
 export function toolbarHtml({ pages, pdf, subtitle, variants }) {
   const sw = variants && variants.length
-    ? `<div class="switch" role="group" aria-label="Variante" title="Cambia entre tónica negra y un color distinto por modo">${variants.map((v) => `<a href="${v.href}"${v.on ? ' class="on" aria-current="page"' : ''}>${esc(v.label)}</a>`).join('')}</div>`
+    ? `<div class="switch" role="group" aria-label="Variante" title="Cambia entre tónica negra y un color distinto por modo">${variants.map((v) => `<button type="button" data-v="${v.v}" data-pdf="${v.pdf}">${esc(v.label)}</button>`).join('')}</div>`
     : '';
   return `<nav class="toolbar"><div class="row">
 <div class="brand"><b>Modos griegos</b><span>${esc(subtitle)}</span></div>
-<div class="tabs">${pages.map((p, i) => `<a href="#${p.id}"${i === 0 ? ' class="on"' : ''}${p.dot ? ` style="--dot:${p.dot}"` : ''}>${esc(p.nav)}</a>`).join('')}</div>
+<div class="tabs">${pages.map((p, i) => `<a href="#${p.id}"${i === 0 ? ' class="on"' : ''}${p.dot ? ` style="--dot:${p.dot}"` : ''}${p.vary ? ' data-mode' : ''}>${esc(p.nav)}</a>`).join('')}</div>
 ${sw}
 <div class="actions">
-<a class="btn primary" href="${pdf}" download>${ICON.download}<span class="label">PDF</span></a>
+<a class="btn primary" id="pdf" href="${pdf}" download>${ICON.download}<span class="label">PDF</span></a>
 <button class="btn" type="button" onclick="window.print()" title="Imprimir">${ICON.print}<span class="label">Imprimir</span></button>
 </div></div></nav>`;
 }
 
-// Marca la pestaña de la página visible.
+// Marca la pestaña de la página visible y maneja el selector de variante (sin recargar).
 export const toolbarJs = `
+(() => {
+  const btns = [...document.querySelectorAll('.toolbar .switch button')];
+  if (!btns.length) return;
+  const set = (v) => {
+    document.body.className = v;
+    btns.forEach((b) => b.classList.toggle('on', b.dataset.v === v));
+    const b = btns.find((x) => x.dataset.v === v); if (b) document.getElementById('pdf').href = b.dataset.pdf;
+    const u = new URL(location.href); u.searchParams.set('v', v); history.replaceState(null, '', u);
+  };
+  btns.forEach((b) => b.addEventListener('click', () => set(b.dataset.v)));
+  set(document.body.className || btns[0].dataset.v);
+})();
 (() => {
   const links = [...document.querySelectorAll('.toolbar .tabs a')];
   const byId = new Map(links.map((a) => [a.getAttribute('href').slice(1), a]));
@@ -70,7 +82,6 @@ export const toolbarJs = `
       if (!e.isIntersecting) return;
       links.forEach((a) => a.classList.remove('on'));
       const a = byId.get(e.target.id);
-      document.querySelectorAll('.toolbar .switch a').forEach((v) => { v.href = v.getAttribute('href').split('#')[0] + '#' + e.target.id; });
       if (a) { a.classList.add('on'); const t = a.parentElement; t.scrollTo({ left: a.offsetLeft - t.clientWidth / 2 + a.offsetWidth / 2, behavior: 'smooth' }); }
     });
   }, { rootMargin: '-45% 0px -50% 0px' });
