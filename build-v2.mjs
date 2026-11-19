@@ -241,7 +241,7 @@ const modePages = (colorOf) => MODES.map((m) => ({
 mkdirSync(new URL('./v2/', import.meta.url), { recursive: true });
 const negro = [reference, ...modePages(() => C.black)];
 const colores = [reference, ...modePages((m) => m.color)];
-const variants = (on) => [{ href: 'index.html', label: 'Tónica negra', on: on === 0 }, { href: 'colores.html', label: 'Colores', on: on === 1 }];
+const variants = (on) => [{ href: 'index.html', label: 'Tónica negra', on: on === 0 }, { href: 'colores.html', label: 'Color por modo', on: on === 1 }];
 writeFileSync(new URL('./v2/index.html', import.meta.url), html(negro, 'modos-tonica-negra.pdf', variants(0)));
 writeFileSync(new URL('./v2/colores.html', import.meta.url), html(colores, 'modos-colores.pdf', variants(1)));
 console.log('v2: index.html y colores.html,', negro.length, 'páginas cada una');

@@ -69,7 +69,7 @@
 <nav class="toolbar"><div class="row">
 <div class="brand"><b>Modos griegos</b><span>Versión 2 · 7 posiciones</span></div>
 <div class="tabs"><a href="#escala-mayor" class="on" style="--dot:#CE3468">Escala Mayor</a><a href="#jonico" style="--dot:#1E1E1E">Jónico</a><a href="#dorico" style="--dot:#1E1E1E">Dórico</a><a href="#frigio" style="--dot:#1E1E1E">Frigio</a><a href="#lidio" style="--dot:#1E1E1E">Lidio</a><a href="#mixolidio" style="--dot:#1E1E1E">Mixolidio</a><a href="#eolico" style="--dot:#1E1E1E">Eólico</a><a href="#locrio" style="--dot:#1E1E1E">Locrio</a></div>
-<div class="switch" role="group" aria-label="Variante"><a href="index.html" class="on" aria-current="page">Tónica negra</a><a href="colores.html">Colores</a></div>
+<div class="switch" role="group" aria-label="Variante" title="Cambia entre tónica negra y un color distinto por modo"><a href="index.html" class="on" aria-current="page">Tónica negra</a><a href="colores.html">Color por modo</a></div>
 <div class="actions">
 <a class="btn primary" href="modos-tonica-negra.pdf" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg><span class="label">PDF</span></a>
 <button class="btn" type="button" onclick="window.print()" title="Imprimir"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M7 14h10v6H7z"/></svg><span class="label">Imprimir</span></button>
@@ -2729,6 +2729,7 @@
       if (!e.isIntersecting) return;
       links.forEach((a) => a.classList.remove('on'));
       const a = byId.get(e.target.id);
+      document.querySelectorAll('.toolbar .switch a').forEach((v) => { v.href = v.getAttribute('href').split('#')[0] + '#' + e.target.id; });
       if (a) { a.classList.add('on'); const t = a.parentElement; t.scrollTo({ left: a.offsetLeft - t.clientWidth / 2 + a.offsetWidth / 2, behavior: 'smooth' }); }
     });
   }, { rootMargin: '-45% 0px -50% 0px' });

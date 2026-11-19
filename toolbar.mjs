@@ -48,7 +48,7 @@ export const toolbarCss = `
 // pages: [{id, nav, dot?}], pdf: href, subtitle: texto chico, variants: [{href, label, on}] (opcional)
 export function toolbarHtml({ pages, pdf, subtitle, variants }) {
   const sw = variants && variants.length
-    ? `<div class="switch" role="group" aria-label="Variante">${variants.map((v) => `<a href="${v.href}"${v.on ? ' class="on" aria-current="page"' : ''}>${esc(v.label)}</a>`).join('')}</div>`
+    ? `<div class="switch" role="group" aria-label="Variante" title="Cambia entre tónica negra y un color distinto por modo">${variants.map((v) => `<a href="${v.href}"${v.on ? ' class="on" aria-current="page"' : ''}>${esc(v.label)}</a>`).join('')}</div>`
     : '';
   return `<nav class="toolbar"><div class="row">
 <div class="brand"><b>Modos griegos</b><span>${esc(subtitle)}</span></div>
@@ -70,6 +70,7 @@ export const toolbarJs = `
       if (!e.isIntersecting) return;
       links.forEach((a) => a.classList.remove('on'));
       const a = byId.get(e.target.id);
+      document.querySelectorAll('.toolbar .switch a').forEach((v) => { v.href = v.getAttribute('href').split('#')[0] + '#' + e.target.id; });
       if (a) { a.classList.add('on'); const t = a.parentElement; t.scrollTo({ left: a.offsetLeft - t.clientWidth / 2 + a.offsetWidth / 2, behavior: 'smooth' }); }
     });
   }, { rootMargin: '-45% 0px -50% 0px' });
