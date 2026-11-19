@@ -1,6 +1,7 @@
 // Genera index.html (todas las páginas) a partir de data.mjs.
 // Unidades: píxeles a 150 dpi sobre una hoja A4 (1240 x 1754), igual que el original escaneado.
 import { writeFileSync } from 'node:fs';
+import { toolbarCss, toolbarHtml, toolbarJs } from './toolbar.mjs';
 import { PAGES } from './data.mjs';
 
 const W = 1240, H = 1754;
@@ -181,16 +182,12 @@ const html = `<!doctype html>
 <style>
   @page { size: A4; margin: 0; }
   html, body { margin: 0; padding: 0; background: #d9d9d9; }
-  .toolbar { position: sticky; top: 0; z-index: 2; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: center;
-    padding: 10px 16px; background: #222; font: 14px/1.2 system-ui, sans-serif; }
-  .toolbar a, .toolbar button { color: #fff; background: #3a3a3a; border: 0; border-radius: 4px; padding: 6px 10px; text-decoration: none; cursor: pointer; font: inherit; }
-  .toolbar .pdf { background: ${C.red}; }
+${toolbarCss}
   .page { width: 210mm; height: 297mm; margin: 16px auto; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.25); overflow: hidden; }
   .page svg { display: block; width: 100%; height: 100%; }
   @media screen and (max-width: 840px) { .page { width: calc(100vw - 32px); height: calc((100vw - 32px) * 1.41428); } }
   @media print {
     html, body { background: #fff; }
-    .toolbar { display: none; }
     .page { margin: 0; box-shadow: none; width: 210mm; height: 297mm; break-after: page; }
   }
   .num { font-family: ${F.num}; font-size: 15px; text-anchor: middle; fill: ${C.text}; }
@@ -204,13 +201,10 @@ const html = `<!doctype html>
 </style>
 </head>
 <body>
-<nav class="toolbar">
-${PAGES.map((p) => `<a href="#${p.id}">${esc(p.nav)}</a>`).join('\n')}
-<a class="pdf" href="modos-griegos.pdf" download>Descargar PDF</a>
-<button onclick="window.print()">Imprimir</button>
-</nav>
+${toolbarHtml({ pages: PAGES, pdf: 'modos-griegos.pdf', subtitle: 'Versión 1 · 5 posiciones' })}
 ${PAGES.map(page).join('\n')}
 <script>
+${toolbarJs}
 // Alinea la leyenda a la derecha de la barra (borde medido en el original: x = 1129.6).
 document.fonts.ready.then(() => {
   document.querySelectorAll(".legend[data-auto]").forEach((lg) => {

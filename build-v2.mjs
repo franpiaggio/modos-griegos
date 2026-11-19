@@ -2,6 +2,7 @@
 // Genera v2/index.html (tónica en negro) y v2/colores.html (un color por modo).
 // Unidades: píxeles a 150 dpi (1 px del modelo JPEG = K px). Mismo diseño y tamaños que la versión 1.
 import { writeFileSync, mkdirSync } from 'node:fs';
+import { toolbarCss, toolbarHtml, toolbarJs } from './toolbar.mjs';
 import { MAJOR7, MODES } from './data-v2.mjs';
 
 const K = 1240 / 769; // escala del modelo (769 x 1280 px) a 150 dpi
@@ -182,16 +183,12 @@ function html(pages, pdf, other) {
 <style>
   @page { size: ${PAGE_MM[0]}mm ${PAGE_MM[1]}mm; margin: 0; }
   html, body { margin: 0; padding: 0; background: #d9d9d9; }
-  .toolbar { position: sticky; top: 0; z-index: 2; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: center;
-    padding: 10px 16px; background: #222; font: 14px/1.2 system-ui, sans-serif; }
-  .toolbar a, .toolbar button { color: #fff; background: #3a3a3a; border: 0; border-radius: 4px; padding: 6px 10px; text-decoration: none; cursor: pointer; font: inherit; }
-  .toolbar .pdf { background: ${C.red}; }
+${toolbarCss}
   .page { width: ${PAGE_MM[0]}mm; height: ${PAGE_MM[1]}mm; margin: 16px auto; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.25); overflow: hidden; }
   .page svg { display: block; width: 100%; height: 100%; }
   @media screen and (max-width: 840px) { .page { width: calc(100vw - 32px); height: calc((100vw - 32px) * ${(H / W).toFixed(5)}); } }
   @media print {
     html, body { background: #fff; }
-    .toolbar { display: none; }
     .page { margin: 0; box-shadow: none; width: ${PAGE_MM[0]}mm; height: ${PAGE_MM[1]}mm; break-after: page; }
   }
   .num { font-family: ${F.num}; font-size: 15px; text-anchor: middle; fill: ${C.text}; }
@@ -205,14 +202,10 @@ function html(pages, pdf, other) {
 </style>
 </head>
 <body>
-<nav class="toolbar">
-${pages.map((p) => `<a href="#${p.id}">${esc(p.nav)}</a>`).join('\n')}
-<a class="pdf" href="${pdf}" download>Descargar PDF</a>
-<button onclick="window.print()">Imprimir</button>
-<a href="${other[0]}">${esc(other[1])}</a>
-</nav>
+${toolbarHtml({ pages, pdf, subtitle: 'Versión 2 · 7 posiciones', variants: other })}
 ${pages.map(page).join('\n')}
 <script>
+${toolbarJs}
 // Alinea la leyenda a la derecha de la barra, como en el modelo.
 document.fonts.ready.then(() => {
   document.querySelectorAll('.legend').forEach((lg) => {
@@ -233,13 +226,13 @@ document.fonts.ready.then(() => {
 
 // ---- Páginas ----
 const reference = {
-  id: 'escala-mayor', nav: 'Escala Mayor', title: ['Posición', 'Escala Mayor'],
+  id: 'escala-mayor', dot: C.red, nav: 'Escala Mayor', title: ['Posición', 'Escala Mayor'],
   circle: { note: 'C', color: C.red }, square: { note: 'A', color: C.orange },
   legend: [{ kind: 'tonic', color: C.red, text: 'Tónica mayor' }, { kind: 'square', color: C.orange, text: 'Tónica menor' }],
   positions: MAJOR7,
 };
 const modePages = (colorOf) => MODES.map((m) => ({
-  id: m.id, nav: m.name, title: ['Modo', m.name],
+  id: m.id, dot: colorOf(m), nav: m.name, title: ['Modo', m.name],
   circle: { note: m.note, color: colorOf(m) },
   legend: [{ kind: 'tonic', color: colorOf(m), text: `Tónica ${m.nombre}` }],
   positions: MAJOR7,
@@ -248,6 +241,7 @@ const modePages = (colorOf) => MODES.map((m) => ({
 mkdirSync(new URL('./v2/', import.meta.url), { recursive: true });
 const negro = [reference, ...modePages(() => C.black)];
 const colores = [reference, ...modePages((m) => m.color)];
-writeFileSync(new URL('./v2/index.html', import.meta.url), html(negro, 'modos-tonica-negra.pdf', ['colores.html', 'Ver versión colores']));
-writeFileSync(new URL('./v2/colores.html', import.meta.url), html(colores, 'modos-colores.pdf', ['index.html', 'Ver versión tónica negra']));
+const variants = (on) => [{ href: 'index.html', label: 'Tónica negra', on: on === 0 }, { href: 'colores.html', label: 'Colores', on: on === 1 }];
+writeFileSync(new URL('./v2/index.html', import.meta.url), html(negro, 'modos-tonica-negra.pdf', variants(0)));
+writeFileSync(new URL('./v2/colores.html', import.meta.url), html(colores, 'modos-colores.pdf', variants(1)));
 console.log('v2: index.html y colores.html,', negro.length, 'páginas cada una');
