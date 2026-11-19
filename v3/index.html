@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Escalas y arpegios – Guitarra</title>
+<meta name="description" content="Escalas (modos griegos) y arpegios en 7 posiciones para guitarra, con sonido.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400&family=Inter:wght@400;500;600&family=Oswald:wght@300;700&family=Questrial&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2212%22 fill=%22%231E1E1E%22/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="bar">
+  <div class="brand"><b>Escalas y arpegios</b><span>Guitarra · 7 posiciones</span></div>
+
+  <button class="pick" id="pickBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="picker">
+    <span class="pick-kind" id="pickKind">Escala</span>
+    <span class="pick-name" id="pickName">Do Jónico</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+  </button>
+
+  <div class="tools">
+    <button class="ib" id="playBtn" aria-label="Reproducir (espacio)" title="Reproducir (espacio)">
+      <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+      <svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg>
+    </button>
+    <div class="zoom" role="group" aria-label="Tamaño">
+      <button class="ib sm" id="zoomOut" aria-label="Achicar (−)" title="Achicar (−)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
+      <button class="zv" id="zoomVal" title="Ajustar al ancho">100%</button>
+      <button class="ib sm" id="zoomIn" aria-label="Agrandar (+)" title="Agrandar (+)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg></button>
+    </div>
+    <button class="ib" id="setBtn" aria-label="Configuración" title="Configuración">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- Selector de contenido -->
+<div class="sheet-pop" id="picker" role="dialog" aria-label="Elegir escala o arpegio" hidden>
+  <div class="seg" role="tablist" id="kindSeg">
+    <button role="tab" data-kind="escala">Escalas</button>
+    <button role="tab" data-kind="arpegio">Arpegios</button>
+  </div>
+  <div class="lbl">Tónica</div>
+  <div class="roots" id="roots"></div>
+  <div class="lbl" id="typeLbl">Modo</div>
+  <div class="types" id="types"></div>
+</div>
+
+<main id="stage">
+  <div class="paper" id="paper"></div>
+  <p class="hint">Tocá una posición para verla en grande · <kbd>Espacio</kbd> reproduce · <kbd>1</kbd>–<kbd>7</kbd> abre una posición</p>
+</main>
+
+<!-- Vista ampliada de una posición -->
+<section class="focus" id="focus" tabindex="-1" hidden aria-modal="true" role="dialog" aria-labelledby="focusTitle">
+  <div class="focus-top">
+    <button class="ib" id="fPrev" aria-label="Posición anterior (←)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+    <div class="focus-title"><b id="focusTitle">Posición 1</b><span id="focusSub"></span></div>
+    <button class="ib" id="fNext" aria-label="Posición siguiente (→)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+    <div class="zoom fz" role="group" aria-label="Tamaño de la posición">
+      <button class="ib sm" id="fzOut" aria-label="Achicar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
+      <button class="ib sm" id="fzIn" aria-label="Agrandar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg></button>
+    </div>
+    <button class="ib close" id="fClose" aria-label="Cerrar (Esc)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="focus-body" id="focusBody"></div>
+  <div class="dots" id="fDots" role="tablist" aria-label="Posiciones"></div>
+</section>
+
+<!-- Barra de reproducción -->
+<div class="player" id="player" hidden>
+  <button class="pbtn" id="pPlay" aria-label="Reproducir / detener">
+    <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+    <svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg>
+  </button>
+  <label class="pos-sel">Posición <select id="pPos" aria-label="Posición a reproducir"></select></label>
+  <div class="bpm" role="group" aria-label="Tempo">
+    <button class="ib sm" id="bpmDown" aria-label="Más lento"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
+    <span><b id="bpmVal">80</b> bpm</span>
+    <button class="ib sm" id="bpmUp" aria-label="Más rápido"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg></button>
+  </div>
+  <div class="mini-seg" role="group" aria-label="Dirección" id="dirSeg">
+    <button data-dir="up" title="Ascendente">↑</button>
+    <button data-dir="down" title="Descendente">↓</button>
+    <button data-dir="both" title="Ida y vuelta">↑↓</button>
+  </div>
+  <button class="toggle" id="loopBtn" aria-pressed="false" title="Repetir">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/></svg>
+  </button>
+  <button class="ib sm close" id="pClose" aria-label="Cerrar reproductor"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</div>
+
+<!-- Configuración -->
+<div class="sheet-pop settings" id="settings" role="dialog" aria-label="Configuración" hidden>
+  <div class="row"><span>Tónica</span>
+    <div class="seg" data-set="tonic"><button data-v="negra">Negra</button><button data-v="color">Color por tipo</button></div></div>
+  <div class="row"><span>Etiquetas</span>
+    <div class="seg" data-set="labels"><button data-v="finger">Dedos</button><button data-v="note">Notas</button><button data-v="interval">Intervalos</button></div></div>
+  <div class="row"><span>Nombres</span>
+    <div class="seg" data-set="notation"><button data-v="latin">Do Re Mi</button><button data-v="english">C D E</button></div></div>
+  <div class="row"><span>Mástil completo</span>
+    <div class="seg" data-set="neck"><button data-v="on">Mostrar</button><button data-v="off">Ocultar</button></div></div>
+  <div class="row"><span>Exportar</span>
+    <div class="seg"><button id="printBtn">PDF / Imprimir</button></div></div>
+  <p class="foot">Atajos: <kbd>Espacio</kbd> reproducir · <kbd>←</kbd><kbd>→</kbd> posición · <kbd>1</kbd>–<kbd>7</kbd> ampliar · <kbd>+</kbd><kbd>−</kbd> tamaño · <kbd>Esc</kbd> cerrar</p>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

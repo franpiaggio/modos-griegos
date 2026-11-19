@@ -28,3 +28,16 @@ referencia; después vienen los 7 modos con las mismas figuras y solo la tónica
 - `v2/index.html?v=colores` y `v2/modos-colores.pdf`: cada modo tiene su color. El selector de la barra cambia de variante sin recargar.
 
 Los datos están en `data-v2.mjs` y la geometría en `build-v2.mjs`.
+
+## Versión 3 (`v3/`): app interactiva
+
+App web estática (sin build) con la estética de la v2:
+
+- Escalas: los 7 modos en las 12 tónicas (mismas figuras de la escala mayor).
+- Arpegios: tríadas mayor y menor; con 7ma: maj7, m7, 7 (dominante), m7(b5) (semidisminuido) y dim7.
+- Tocar una posición la abre en grande (en celular se muestra vertical). Zoom de la hoja y de la vista ampliada.
+- Reproducción con sonido de cuerda: tempo, dirección (↑, ↓, ↑↓), repetir, y resaltado de la nota que suena.
+- Configuración (⚙): tónica negra o color por tipo, etiquetas (dedos, notas, intervalos), Do Re Mi o C D E, mástil completo, PDF/imprimir.
+- La URL guarda la selección (`?k=escala&r=2&t=dorico#p3`), así se puede compartir.
+
+Archivos: `v3/theory.js` (teoría y digitaciones), `v3/render.js` (dibujo), `v3/audio.js` (sonido), `v3/app.js` (interfaz).
