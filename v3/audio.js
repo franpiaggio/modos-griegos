@@ -57,12 +57,15 @@ function playAt(midi, when, dur) {
 
 let timer = null;
 let active = [];
+let visuals = [];
 
 export function stop() {
   clearInterval(timer);
   timer = null;
   active.forEach((s) => { try { s.stop(); } catch {} });
   active = [];
+  visuals.forEach(clearTimeout);
+  visuals = [];
 }
 
 export const isPlaying = () => timer !== null;
@@ -78,7 +81,6 @@ export function play(seq, { bpm = 80, loop = false, onNote = () => {}, onEnd = (
   const step = 60 / bpm / 2; // corcheas
   let i = 0;
   let t = ctx.currentTime + 0.08;
-  const visuals = [];
   timer = setInterval(() => {
     while (t < ctx.currentTime + 0.12) {
       if (i >= seq.length) {

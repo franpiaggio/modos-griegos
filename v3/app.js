@@ -1,4 +1,4 @@
-import { build, MODES, CHORDS, ROOTS, NOTE_NAMES, rootName, spell, midiOf, pcOf } from './theory.js';
+import { build, MODES, CHORDS, ROOTS, NOTE_NAMES, rootName, rootLabel, spell, midiOf } from './theory.js';
 import { sheetSvg, layoutLegend, boxOf } from './render.js';
 import * as audio from './audio.js';
 
@@ -36,7 +36,7 @@ function compute() {
   const meta = state.kind === 'escala' ? data.mode : data.chord;
   const spelled = spell(state.root, meta.intervals, settings.notation);
   const names = NOTE_NAMES[settings.notation].map((n, p) => spelled.get(p) || n);
-  const rn = rootName(state.root, settings.notation);
+  const rn = rootName(state.root, settings.notation, meta.intervals);
   const tonicColor = settings.tonic === 'color' ? meta.color : '#1E1E1E';
   opts = {
     positions: data.positions,
@@ -49,6 +49,7 @@ function compute() {
     title: state.kind === 'escala' ? ['Modo', meta.name] : ['Arpegio', `${rn} ${CHORD_TITLE[meta.id]}`],
     legend: [{ color: tonicColor, text: `Tónica ${rn}` }],
     rn, meta,
+    display: state.kind === 'escala' ? `${rn} ${meta.name}` : `${rn} ${CHORD_TITLE[meta.id]}`,
   };
 }
 
@@ -65,8 +66,8 @@ function render() {
   markSelected();
   // selector
   $('pickKind').textContent = state.kind === 'escala' ? 'Escala' : 'Arpegio';
-  $('pickName').textContent = `${opts.rn} ${state.kind === 'escala' ? opts.meta.name : opts.meta.name.toLowerCase()}`;
-  document.title = `${opts.rn} ${opts.meta.name} – Escalas y arpegios`;
+  $('pickName').textContent = opts.display;
+  document.title = `${opts.display} – Escalas y arpegios`;
   renderPicker();
   renderPlayerPositions();
   if (state.focus !== null) renderFocus();
@@ -96,7 +97,7 @@ function renderPicker() {
     b.classList.toggle('on', on);
     b.setAttribute('aria-selected', on);
   });
-  $('roots').innerHTML = ROOTS.map(([p]) => `<button data-r="${p}" class="${p === state.root ? 'on' : ''}" aria-pressed="${p === state.root}">${rootName(p, settings.notation)}</button>`).join('');
+  $('roots').innerHTML = ROOTS.map(([p]) => `<button data-r="${p}" class="${p === state.root ? 'on' : ''}" aria-pressed="${p === state.root}">${rootLabel(p, settings.notation)}</button>`).join('');
   $('typeLbl').textContent = state.kind === 'escala' ? 'Modo' : 'Tipo';
   let html = '';
   let grp = null;
@@ -150,7 +151,7 @@ $('types').addEventListener('click', (e) => {
   stopPlay();
   state.type = b.dataset.t;
   render();
-  $('types').querySelector(`[data-t="${state.type}"]`)?.focus({ preventScroll: true });
+  closePop();
 });
 
 // ---------- configuración ----------
@@ -204,6 +205,10 @@ function openFocus(i, push = true) {
   state.focus = i;
   if (i !== 'neck') state.playPos = i;
   $('focus').hidden = false;
+  document.body.classList.add('in-focus');
+  $('pPos').value = state.playPos;
+  store.set('seenFocus', true);
+  $('hintM').hidden = true;
   document.body.style.overflow = 'hidden';
   renderFocus();
   markSelected();
@@ -215,7 +220,11 @@ function closeFocus(fromPop = false) {
   state.focus = null;
   $('focus').hidden = true;
   document.body.style.overflow = '';
-  if (!fromPop && location.hash) history.back();
+  if (!fromPop) {
+    if (history.state?.focus != null) history.back();
+    else history.replaceState(null, '', location.pathname + location.search);
+  }
+  document.body.classList.remove('in-focus');
 }
 function renderFocus() {
   const i = state.focus;
@@ -244,7 +253,7 @@ function renderFocus() {
     svg.setAttribute('viewBox', [bx, by, bw, bh].join(' '));
   }
   svg.setAttribute('aria-label', i === 'neck' ? 'Mástil completo' : `Posición ${i + 1}`);
-  const name = `${opts.rn} ${opts.meta.name}`;
+  const name = opts.display;
   if (i === 'neck') {
     $('focusTitle').textContent = 'Mástil completo';
     $('focusSub').textContent = name;
@@ -266,6 +275,7 @@ function stepFocus(d) {
   stopPlay();
   state.focus = list[j];
   if (state.focus !== 'neck') state.playPos = state.focus;
+  $('pPos').value = state.playPos;
   history.replaceState({ focus: state.focus }, '', `#${state.focus === 'neck' ? 'mastil' : 'p' + (state.focus + 1)}`);
   renderFocus();
   markSelected();
@@ -421,6 +431,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 // ---------- inicio ----------
+if (store.get('seenFocus', false)) $('hintM').hidden = true;
 renderSettings();
 render();
 const m = location.hash.match(/^#p(\d)$/);

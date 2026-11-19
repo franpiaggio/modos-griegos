@@ -112,14 +112,30 @@ const NAT = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const LATIN = { C: "Do", D: "Re", E: "Mi", F: "Fa", G: "Sol", A: "La", B: "Si" };
 const ACC = { "-2": "bb", "-1": "b", 0: "", 1: "#", 2: "##" };
 
-export function rootName(root, notation) {
-  const [, n] = ROOTS[root];
-  return notation === "latin" ? LATIN[n[0]] + n.slice(1) : n;
+const ALT = { 1: ["C#", "Db"], 3: ["D#", "Eb"], 6: ["F#", "Gb"], 8: ["G#", "Ab"], 10: ["A#", "Bb"] };
+const toLatin = (n) => LATIN[n[0]] + n.slice(1);
+
+// Elige la escritura de la tónica con menos alteraciones para esos intervalos (ej. Do# frigio, no Reb frigio).
+export function rootSpelling(root, intervals) {
+  const opts = ALT[root] || [ROOTS[root][1]];
+  if (!intervals || opts.length === 1) return ROOTS[root][1];
+  const cost = (n) => [...spellLetters(n, root, intervals).values()].reduce((t, x) => t + (x.length - 1) + (/##|bb/.test(x) ? 5 : 0), 0);
+  return opts.reduce((best, n) => (cost(n) < cost(best) ? n : best), ROOTS[root][1]);
 }
 
-// Nombra cada nota de la escala/acorde con la letra que le corresponde (ej. Fa dórico: Lab, no Sol#).
-export function spell(root, intervals, notation) {
-  const rl = LETTERS.indexOf(ROOTS[root][1][0]);
+export function rootName(root, notation, intervals) {
+  const n = rootSpelling(root, intervals);
+  return notation === "latin" ? toLatin(n) : n;
+}
+
+// Etiqueta del botón de tónica: muestra las dos escrituras enarmónicas
+export function rootLabel(root, notation) {
+  const list = ALT[root] || [ROOTS[root][1]];
+  return list.map((n) => (notation === "latin" ? toLatin(n) : n)).join("/");
+}
+
+function spellLetters(rootStr, root, intervals) {
+  const rl = LETTERS.indexOf(rootStr[0]);
   const map = new Map();
   intervals.forEach((iv) => {
     const deg = Number(iv.replace(/[^0-9]/g, ""));
@@ -127,7 +143,14 @@ export function spell(root, intervals, notation) {
     const p = (root + ivToSemis(iv)) % 12;
     let d = ((p - NAT[letter]) % 12 + 12) % 12;
     if (d > 6) d -= 12;
-    map.set(p, (notation === "latin" ? LATIN[letter] : letter) + ACC[d]);
+    map.set(p, letter + ACC[d]);
   });
   return map;
+}
+
+// Nombra cada nota de la escala/acorde con la letra que le corresponde (ej. Fa dórico: Lab, no Sol#).
+export function spell(root, intervals, notation) {
+  const m = spellLetters(rootSpelling(root, intervals), root, intervals);
+  if (notation === "latin") m.forEach((v, k) => m.set(k, toLatin(v)));
+  return m;
 }
