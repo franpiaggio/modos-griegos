@@ -65,6 +65,14 @@
       <button class="ib sm" id="fzOut" aria-label="Achicar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
       <button class="ib sm" id="fzIn" aria-label="Agrandar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg></button>
     </div>
+    <div class="dl-wrap">
+      <button class="ib" id="dlBtn" aria-haspopup="menu" aria-expanded="false" aria-label="Exportar esta posición" title="Exportar esta posición"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg></button>
+      <div class="dl-menu" id="dlMenu" role="menu" hidden>
+        <button role="menuitem" data-fmt="png">Imagen PNG <small>alta resolución</small></button>
+        <button role="menuitem" data-fmt="svg">SVG <small>vectorial, editable</small></button>
+        <button role="menuitem" data-fmt="pdf">PDF <small>solo esta posición</small></button>
+      </div>
+    </div>
     <button class="ib close" id="fClose" aria-label="Cerrar (Esc)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>
   <div class="focus-body" id="focusBody"></div>
@@ -105,11 +113,13 @@
   <div class="row"><span>Mástil completo</span>
     <div class="seg" data-set="neck"><button data-v="on">Mostrar</button><button data-v="off">Ocultar</button></div></div>
   <div class="row"><span>Exportar</span>
-    <button class="plain" id="printBtn">PDF / Imprimir</button></div>
+    <div class="exp"><button class="plain" id="printBtn">Hoja completa (PDF)</button><button class="plain" id="zipBtn">Cada posición por separado (ZIP)</button></div>
+    <small class="note">Para exportar una sola posición, abrila y usá el botón de descarga.</small></div>
   <p class="foot">Atajos: <kbd>Espacio</kbd> reproducir · <kbd>←</kbd><kbd>→</kbd> posición · <kbd>1</kbd>–<kbd>7</kbd> ampliar · <kbd>+</kbd><kbd>−</kbd> tamaño · <kbd>Esc</kbd> cerrar</p>
 </div>
 
 <div class="scrim" id="scrim" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 <script type="module" src="app.js"></script>
 </body>
 </html>

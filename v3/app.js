@@ -1,6 +1,7 @@
 import { build, MODES, CHORDS, ROOTS, NOTE_NAMES, rootName, rootLabel, spell, midiOf } from './theory.js';
 import { sheetSvg, layoutLegend, boxOf } from './render.js';
 import * as audio from './audio.js';
+import { pieceSvg, pngBlob, save, printPiece, zipAll, slug } from './export.js';
 
 const $ = (id) => document.getElementById(id);
 const ZOOMS = [0.5, 0.6, 0.75, 0.9, 1, 1.15, 1.3, 1.5, 1.75, 2, 2.5];
@@ -212,7 +213,7 @@ function openFocus(i, push = true) {
   document.body.style.overflow = 'hidden';
   renderFocus();
   markSelected();
-  if (push) history.pushState({ focus: i }, '', `#${i === 'neck' ? 'mastil' : 'p' + (i + 1)}`);
+  if (push) history.pushState({ focus: i, pushed: true }, '', `#${i === 'neck' ? 'mastil' : 'p' + (i + 1)}`);
   $('focus').focus({ preventScroll: true });
 }
 function closeFocus(fromPop = false) {
@@ -221,7 +222,7 @@ function closeFocus(fromPop = false) {
   $('focus').hidden = true;
   document.body.style.overflow = '';
   if (!fromPop) {
-    if (history.state?.focus != null) history.back();
+    if (history.state?.pushed) history.back();
     else history.replaceState(null, '', location.pathname + location.search);
   }
   document.body.classList.remove('in-focus');
@@ -276,7 +277,7 @@ function stepFocus(d) {
   state.focus = list[j];
   if (state.focus !== 'neck') state.playPos = state.focus;
   $('pPos').value = state.playPos;
-  history.replaceState({ focus: state.focus }, '', `#${state.focus === 'neck' ? 'mastil' : 'p' + (state.focus + 1)}`);
+  history.replaceState({ focus: state.focus, pushed: !!history.state?.pushed }, '', `#${state.focus === 'neck' ? 'mastil' : 'p' + (state.focus + 1)}`);
   renderFocus();
   markSelected();
   if (wasPlaying && state.focus !== 'neck') startPlay();
@@ -412,6 +413,7 @@ window.addEventListener('keydown', (e) => {
   const tag = e.target.tagName;
   if (tag === 'SELECT' || tag === 'INPUT') return;
   if (e.key === 'Escape') {
+    if (!$('dlMenu').hidden) { toggleDl(false); $('dlBtn').focus(); return; }
     if (openPop) closePop();
     else if (state.focus !== null) { stopPlay(); closeFocus(); }
     return;
@@ -428,6 +430,55 @@ window.addEventListener('keydown', (e) => {
     else openFocus(i);
   } else if (e.key === '+' || e.key === '=') (state.focus !== null ? $('fzIn').click() : stepZoom(1));
   else if (e.key === '-') (state.focus !== null ? $('fzOut').click() : stepZoom(-1));
+});
+
+// ---------- exportar ----------
+let toastTimer = null;
+function toast(msg, keep = false) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  if (!keep) toastTimer = setTimeout(() => (t.hidden = true), 2200);
+}
+const pieceName = (i) => `${slug(opts.display)}-${i === 'neck' ? 'mastil' : 'posicion-' + (i + 1)}`;
+function toggleDl(open) {
+  const m = $('dlMenu');
+  const show = open ?? m.hidden;
+  m.hidden = !show;
+  $('dlBtn').setAttribute('aria-expanded', show);
+  if (show) m.querySelector('button').focus({ preventScroll: true });
+}
+$('dlBtn').addEventListener('click', (e) => { e.stopPropagation(); toggleDl(); });
+document.addEventListener('click', (e) => { if (!e.target.closest('.dl-wrap')) toggleDl(false); });
+$('dlMenu').addEventListener('click', async (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  toggleDl(false);
+  const i = state.focus;
+  try {
+    toast('Preparando…', true);
+    const piece = await pieceSvg(opts, i);
+    if (b.dataset.fmt === 'svg') save(new Blob([piece.text], { type: 'image/svg+xml' }), pieceName(i) + '.svg');
+    else if (b.dataset.fmt === 'png') save(await pngBlob(piece), pieceName(i) + '.png');
+    else printPiece(piece);
+    toast(b.dataset.fmt === 'pdf' ? 'Elegí “Guardar como PDF” en el diálogo' : 'Descargado');
+  } catch (err) {
+    console.error(err);
+    toast('No se pudo exportar. Probá de nuevo.');
+  }
+});
+$('zipBtn').addEventListener('click', async () => {
+  closePop();
+  try {
+    const list = focusList();
+    toast(`Exportando 0 de ${list.length}…`, true);
+    const blob = await zipAll(opts, list, slug(opts.display), (n, t) => toast(`Exportando ${n} de ${t}…`, true));
+    save(blob, slug(opts.display) + '-posiciones.zip');
+    toast('ZIP descargado (PNG y SVG de cada posición)');
+  } catch (err) {
+    console.error(err);
+    toast('No se pudo exportar. Probá de nuevo.');
+  }
 });
 
 // ---------- inicio ----------
