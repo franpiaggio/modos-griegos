@@ -18,3 +18,13 @@ La primera página reproduce la pentatónica original como referencia de formato
 ```sh
 ./make-pdf.sh
 ```
+
+## Versión 2 (`v2/`)
+
+Sigue el modelo "Posición Escala Mayor": 7 posiciones por página. La primera página reproduce el modelo como
+referencia; después vienen los 7 modos con las mismas figuras y solo la tónica del modo marcada.
+
+- `v2/index.html` y `v2/modos-tonica-negra.pdf`: la tónica es negra en todos los modos.
+- `v2/colores.html` y `v2/modos-colores.pdf`: cada modo tiene su color.
+
+Los datos están en `data-v2.mjs` y la geometría en `build-v2.mjs`.
