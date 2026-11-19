@@ -35,6 +35,7 @@ App web estática (sin build) con la estética de la v2:
 
 - Escalas: los 7 modos en las 12 tónicas (mismas figuras de la escala mayor).
 - Arpegios: tríadas mayor y menor; con 7ma: maj7, m7, 7 (dominante), m7(b5) (semidisminuido) y dim7.
+- Fila de variantes siempre visible (y en la vista ampliada): cambia entre tipos de arpegio o modos con un toque, o con las teclas [ y ].
 - Tocar una posición la abre en grande (en celular se muestra vertical). Zoom de la hoja y de la vista ampliada.
 - Reproducción con sonido de cuerda: tempo, dirección (↑, ↓, ↑↓), repetir, y resaltado de la nota que suena.
 - Configuración (⚙): tónica negra o color por tipo, etiquetas (dedos, notas, intervalos), Do Re Mi o C D E, mástil completo.

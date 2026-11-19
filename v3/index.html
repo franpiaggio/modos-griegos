@@ -35,6 +35,7 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
     </button>
   </div>
+  <nav class="variants" id="variants" aria-label="Variantes"></nav>
 </header>
 
 <!-- Selector de contenido -->
@@ -75,6 +76,7 @@
     </div>
     <button class="ib close" id="fClose" aria-label="Cerrar (Esc)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>
+  <nav class="variants in-f" id="fVariants" aria-label="Variantes"></nav>
   <div class="focus-body" id="focusBody"></div>
   <div class="dots" id="fDots" role="tablist" aria-label="Posiciones"></div>
 </section>
@@ -115,7 +117,7 @@
   <div class="row"><span>Exportar</span>
     <div class="exp"><button class="plain" id="printBtn">Hoja completa (PDF)</button><button class="plain" id="zipBtn">Cada posición por separado (ZIP)</button></div>
     <small class="note">Para exportar una sola posición, abrila y usá el botón de descarga.</small></div>
-  <p class="foot">Atajos: <kbd>Espacio</kbd> reproducir · <kbd>←</kbd><kbd>→</kbd> posición · <kbd>1</kbd>–<kbd>7</kbd> ampliar · <kbd>+</kbd><kbd>−</kbd> tamaño · <kbd>Esc</kbd> cerrar</p>
+  <p class="foot">Atajos: <kbd>Espacio</kbd> reproducir · <kbd>←</kbd><kbd>→</kbd> posición · <kbd>1</kbd>–<kbd>7</kbd> ampliar · <kbd>[</kbd><kbd>]</kbd> variante · <kbd>+</kbd><kbd>−</kbd> tamaño · <kbd>Esc</kbd> cerrar</p>
 </div>
 
 <div class="scrim" id="scrim" hidden></div>

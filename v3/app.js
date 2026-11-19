@@ -70,6 +70,7 @@ function render() {
   $('pickName').textContent = opts.display;
   document.title = `${opts.display} – Escalas y arpegios`;
   renderPicker();
+  renderVariants();
   renderPlayerPositions();
   if (state.focus !== null) renderFocus();
   applyZoom();
@@ -154,6 +155,35 @@ $('types').addEventListener('click', (e) => {
   render();
   closePop();
 });
+
+// ---------- variantes (acceso rápido sin abrir el selector) ----------
+const SHORT = { mayor: 'Mayor', menor: 'Menor', maj7: 'maj7', m7: 'm7', dom7: '7', m7b5: 'm7(b5)', dim7: 'dim7' };
+function renderVariants() {
+  let html = '';
+  let grp = null;
+  types().forEach((t) => {
+    if (t.group && grp && t.group !== grp) html += '<span class="sep" aria-hidden="true"></span>';
+    grp = t.group;
+    const label = state.kind === 'escala' ? t.name : SHORT[t.id];
+    const on = t.id === state.type;
+    html += `<button data-t="${t.id}" class="${on ? 'on' : ''}" aria-pressed="${on}" title="${opts.rn} ${t.name}" style="--c:${settings.tonic === 'color' ? t.color : '#1E1E1E'}">${label}</button>`;
+  });
+  ['variants', 'fVariants'].forEach((id) => {
+    const el = $(id);
+    el.innerHTML = html;
+    el.querySelector('.on')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  });
+}
+function pickVariant(e) {
+  const b = e.target.closest('button[data-t]'); if (!b || b.dataset.t === state.type) return;
+  const was = audio.isPlaying();
+  stopPlay();
+  state.type = b.dataset.t;
+  render();
+  if (was && state.focus !== 'neck') startPlay();
+}
+$('variants').addEventListener('click', pickVariant);
+$('fVariants').addEventListener('click', pickVariant);
 
 // ---------- configuración ----------
 function renderSettings() {
@@ -428,6 +458,10 @@ window.addEventListener('keydown', (e) => {
     const i = Number(e.key) - 1;
     if (state.focus !== null) stepFocus(focusList().indexOf(i) - focusList().indexOf(state.focus));
     else openFocus(i);
+  } else if (e.key === '[' || e.key === ']') {
+    const list = types();
+    const j = list.findIndex((t) => t.id === state.type) + (e.key === ']' ? 1 : -1);
+    if (j >= 0 && j < list.length) $('variants').querySelector(`[data-t="${list[j].id}"]`).click();
   } else if (e.key === '+' || e.key === '=') (state.focus !== null ? $('fzIn').click() : stepZoom(1));
   else if (e.key === '-') (state.focus !== null ? $('fzOut').click() : stepZoom(-1));
 });
