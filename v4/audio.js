@@ -45,7 +45,8 @@ function pluckBuffer(midi) {
 }
 
 // ---------------------------------------------------------------- guitarra sampleada
-// Muestras de una guitarra archtop grabada con micrófono: "Shinyguitar" de Karoryfer Samples (CC0).
+// Muestras de una guitarra archtop grabada con micrófono: "Shinyguitar" de Karoryfer Samples (CC0),
+// toma de ataque fuerte y ecualizada con más brillo (corte de graves turbios, realce de agudos).
 // Una muestra cada 3 semitonos, con dos tomas distintas (round robin) para que las notas repetidas no suenen
 // idénticas; las notas intermedias se obtienen cambiando la velocidad de reproducción (±1 semitono).
 const SAMPLES = { 40: 'e2', 42: 'gb2', 45: 'a2', 48: 'c3', 51: 'eb3', 54: 'gb3', 57: 'a3', 60: 'c4', 63: 'eb4', 66: 'gb4', 69: 'a4', 72: 'c5', 75: 'eb5', 78: 'gb5' };
@@ -56,7 +57,7 @@ export function preload() {
   ensure();
   loading ||= Promise.all(Object.entries(SAMPLES).map(async ([m, name]) => {
     const takes = await Promise.all([1, 2].map(async (k) => {
-      const url = new URL(`./samples/guitarra/${name}_rr${k}.mp3`, import.meta.url);
+      const url = new URL(`./samples/guitarra/${name}_rr${k}.mp3?v=2`, import.meta.url);
       return ctx.decodeAudioData(await (await fetch(url)).arrayBuffer());
     }));
     sampleBuf.set(Number(m), takes);
