@@ -52,4 +52,4 @@ https://franpiaggio.github.io/modos-griegos/v4/
 - **Teoría**: cada tema tiene **Teoría** (explicación con tablas y ejemplos para escuchar) y **Práctica** (sesiones con corrección): intervalos, escalas, acordes, grados y detección de escalas, oído funcional, acordes por función y extensiones, extensiones de arpegios, dominantes secundarios, sustitución tritonal, intercambio modal e improvisación (explorador chord-scale).
 - **Técnica**: metrónomo completo, práctica sobre un acorde fijo (escalas y arpegios), 21 ejercicios por objetivo (velocidad / calidad sonora) con escalera de tempo y registro, y formación de acordes (CAGED, tríadas por grupo de cuerdas, drop 2 y drop 3).
 - Investigación de apps y fuentes teóricas: `v4/INVESTIGACION.md`.
-- Sonido: muestras de guitarra acústica de [tonejs-instruments](https://github.com/nbrosowsky/tonejs-instruments) (CC-BY 3.0, Nicholaus P. Brosowsky). Animaciones con GSAP.
+- Sonido: guitarra archtop grabada con micrófono, "Shinyguitar" de [Karoryfer Samples](https://github.com/sfzinstruments/karoryfer.shinyguitar) (CC0). Animaciones con GSAP.

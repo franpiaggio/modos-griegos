@@ -45,17 +45,21 @@ function pluckBuffer(midi) {
 }
 
 // ---------------------------------------------------------------- guitarra sampleada
-// Muestras de guitarra acústica (tonejs-instruments, CC-BY 3.0), una cada 3 semitonos; las notas
-// intermedias se obtienen cambiando la velocidad de reproducción (como máximo ±1 semitono).
-const SAMPLES = { 40: 'E2', 43: 'G2', 46: 'As2', 49: 'Cs3', 52: 'E3', 55: 'G3', 58: 'As3', 61: 'Cs4', 64: 'E4', 67: 'G4', 70: 'As4', 73: 'Cs5' };
-const sampleBuf = new Map();
+// Muestras de una guitarra archtop grabada con micrófono: "Shinyguitar" de Karoryfer Samples (CC0).
+// Una muestra cada 3 semitonos, con dos tomas distintas (round robin) para que las notas repetidas no suenen
+// idénticas; las notas intermedias se obtienen cambiando la velocidad de reproducción (±1 semitono).
+const SAMPLES = { 40: 'e2', 42: 'gb2', 45: 'a2', 48: 'c3', 51: 'eb3', 54: 'gb3', 57: 'a3', 60: 'c4', 63: 'eb4', 66: 'gb4', 69: 'a4', 72: 'c5', 75: 'eb5', 78: 'gb5' };
+const sampleBuf = new Map(); // midi -> [toma1, toma2]
 let loading = null;
+let rr = 0;
 export function preload() {
   ensure();
   loading ||= Promise.all(Object.entries(SAMPLES).map(async ([m, name]) => {
-    const url = new URL(`./samples/guitarra/${name}.mp3`, import.meta.url);
-    const buf = await ctx.decodeAudioData(await (await fetch(url)).arrayBuffer());
-    sampleBuf.set(Number(m), buf);
+    const takes = await Promise.all([1, 2].map(async (k) => {
+      const url = new URL(`./samples/guitarra/${name}_rr${k}.mp3`, import.meta.url);
+      return ctx.decodeAudioData(await (await fetch(url)).arrayBuffer());
+    }));
+    sampleBuf.set(Number(m), takes);
   })).catch((e) => { console.warn('Sin muestras de guitarra, uso sonido sintético', e); });
   return loading;
 }
@@ -65,7 +69,8 @@ function source(midi) {
   if (sampleBuf.size) {
     let best = null;
     sampleBuf.forEach((_, m) => { if (best === null || Math.abs(m - midi) < Math.abs(best - midi) || (Math.abs(m - midi) === Math.abs(best - midi) && m < best)) best = m; });
-    src.buffer = sampleBuf.get(best);
+    const takes = sampleBuf.get(best);
+    src.buffer = takes[rr++ % takes.length];
     src.playbackRate.value = 2 ** ((midi - best) / 12);
   } else {
     src.buffer = pluckBuffer(midi);
