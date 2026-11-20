@@ -1,0 +1,78 @@
+/* Estructura general de la v4: navegación por secciones, barra de Información y ficha. */
+:root { --top-h: 56px; --ok: #2E9A5F; --bad: #CE3468; }
+body { min-height: 100vh; }
+
+/* ---------- navegación principal ---------- */
+.top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 16px; height: var(--top-h); padding: 0 16px;
+  padding-top: env(safe-area-inset-top); background: #fff; border-bottom: 1px solid rgba(0,0,0,.07); }
+.top .brand { text-decoration: none; color: inherit; }
+.tabs { display: flex; gap: 2px; padding: 3px; background: var(--soft); border-radius: 11px; margin: 0 auto; }
+.tabs a { padding: 7px 16px; border-radius: 8px; color: var(--muted); text-decoration: none; font-weight: 500; white-space: nowrap; transition: color .15s, background .15s; }
+.tabs a:hover { color: var(--ink); }
+.tabs a.on { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04); }
+.top .ib { flex: none; }
+.top .ib svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Información ---------- */
+#v-info .bar { top: var(--top-h); z-index: 20; padding-top: 10px; }
+.variants-row { flex-basis: 100%; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.variants-row .variants { flex: 1; flex-basis: auto; min-width: 0; }
+.fam-seg { flex: none; display: flex; gap: 2px; padding: 3px; background: var(--soft); border-radius: 10px; }
+.fam-seg button { border: 0; background: none; padding: 6px 10px; border-radius: 7px; cursor: pointer; color: var(--muted); font-weight: 500; font-size: 13px; white-space: nowrap; }
+.fam-seg button:hover { color: var(--ink); }
+.fam-seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+#infoBtn.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.types .sym { font-weight: 500; color: #8a8a93; margin-left: 4px; }
+.paper.short { overflow: hidden; }
+
+.info-card { width: var(--paper-w); max-width: calc(100vw - 16px); margin: 0 auto 16px; padding: 16px 18px; background: #fff; border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 30px rgba(0,0,0,.06); }
+.ic-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.ic-head b { font: 700 19px/1.1 Oswald, sans-serif; letter-spacing: .01em; }
+.ic-head small { color: var(--muted); }
+.ic-row { display: grid; grid-template-columns: 170px 1fr; gap: 10px; padding: 8px 0; border-top: 1px solid var(--soft); align-items: baseline; }
+.ic-row > span { font-size: 12px; font-weight: 600; color: var(--muted); }
+.ic-row > div { line-height: 1.9; }
+.chip { display: inline-block; min-width: 30px; padding: 2px 8px; margin: 0 4px 4px 0; border: 1px solid var(--line); border-radius: 999px; text-align: center; font-variant-numeric: tabular-nums; font-size: 13px; line-height: 1.5; }
+.chip.root { background: var(--ink); border-color: var(--ink); color: #fff; }
+.ds { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.dch { display: inline-flex; flex-direction: column; align-items: flex-start; line-height: 1.25; }
+.dch small { color: #8a8a93; font-size: 11.5px; }
+.lnk { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--ink); cursor: pointer; text-decoration: underline; text-decoration-color: #c9c9d1; text-underline-offset: 3px; }
+.lnk:hover { text-decoration-color: var(--ink); }
+.ic-note { margin: 10px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+
+/* vista ampliada y reproductor quedan por encima de la navegación */
+.focus { z-index: 45; }
+.player { z-index: 44; }
+.sheet-pop { top: calc(var(--top-h) + 8px); z-index: 50; }
+.scrim { z-index: 49; }
+.toast { z-index: 70; }
+body:not([data-sec="info"]) .only-info { display: none; }
+
+/* ---------- vistas de Teoría y Técnica: base común ---------- */
+.view-pad { max-width: 980px; margin: 0 auto; padding: 24px 16px 96px; }
+.sec-head { margin: 4px 0 18px; }
+.sec-head h1 { margin: 0; font: 700 26px/1.1 Oswald, sans-serif; letter-spacing: .01em; text-transform: uppercase; }
+.sec-head p { margin: 6px 0 0; color: var(--muted); }
+
+@media (max-width: 760px) {
+  .top { gap: 8px; padding: 0 8px; }
+  .top .brand { display: none; }
+  .tabs { margin: 0; flex: 1; }
+  .tabs a { flex: 1; text-align: center; padding: 8px 6px; }
+  #v-info .bar .brand { display: none; }
+  .variants-row { flex-wrap: wrap; gap: 6px; }
+  .fam-seg { width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .fam-seg button { flex: 1; }
+  .ic-row { grid-template-columns: 1fr; gap: 2px; }
+}
+
+@media print {
+  .top, .info-card, #v-teoria, #v-tecnica { display: none !important; }
+  #v-info .bar { display: none !important; }
+}
+@media (max-width: 760px) {
+  /* en el celular la barra de Información se desplaza con la página: deja más lugar al diagrama */
+  #v-info .bar { position: static; }
+}
