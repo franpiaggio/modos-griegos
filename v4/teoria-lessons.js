@@ -21,8 +21,8 @@ function asc(notes, base = 48) {
 // botón para escuchar: modo 'seq' (melódico) o 'chord' (armónico)
 const play = (midis, mode = 'seq', label = '') => `<button class="lplay" data-play="${midis.join(',')}" data-mode="${mode}" aria-label="Escuchar ${esc(label)}" title="Escuchar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button>`;
 const chordPlay = (root, id) => play(asc(spellAll(root, chordById(id).intervals)), 'chord', sym(root, id));
-const table = (head, rows) => `<div class="ltable"><table><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
-const box = (title, body, cls = '') => `<section class="lbox ${cls}"><h3>${title}</h3>${body}</section>`;
+const table = (head, rows) => `<div class="ltable"><table><thead><tr>${head.map((h) => `<th>${h || '<span class="sr">Escuchar</span>'}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+const box = (title, body, cls = '') => `<section class="lbox ${cls}"><h2>${title}</h2>${body}</section>`;
 const tip = (t) => `<p class="ltip"><b>En la guitarra:</b> ${t}</p>`;
 const key = (t) => `<p class="lkey">${t}</p>`;
 

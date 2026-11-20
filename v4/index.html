@@ -16,6 +16,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2212%22 fill=%22%231E1E1E%22/%3E%3C/svg%3E">
 </head>
 <body>
+<a class="skip" href="#main">Saltar al contenido</a>
 <header class="top">
   <a class="brand" href="#/info"><b>Guitarra</b><span>Teoría y práctica</span></a>
   <nav class="tabs" aria-label="Secciones">
@@ -29,6 +30,7 @@
   </button>
 </header>
 
+<main id="main" tabindex="-1">
 <!-- ============ INFORMACIÓN BÁSICA: escalas y arpegios en 7 (o 5) posiciones ============ -->
 <section class="view" id="v-info" hidden>
   <div class="lib">
@@ -45,7 +47,7 @@
     <button class="nav-btn" id="pickBtn" aria-controls="libNav" aria-expanded="false" aria-label="Elegir escala o arpegio">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
     </button>
-    <div class="lib-title"><small id="pickKind">Escala · Modos griegos</small><h1 id="pickName">Do Jónico</h1></div>
+    <div class="lib-title"><h1 id="pickName">Do Jónico</h1><p class="lib-sub" id="pickKind">Escala mayor y sus modos</p></div>
     <div class="tools">
       <button class="ib" id="playBtn" aria-label="Reproducir (espacio)" title="Reproducir (espacio)">
         <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
@@ -64,12 +66,12 @@
     <nav class="variants" id="variants" aria-label="Variantes"></nav>
   </div>
 
-  <main class="stage" id="stage">
+  <div class="stage" id="stage">
     <p class="hint-m" id="hintM">Tocá una posición para verla en grande</p>
     <div class="info-card" id="infoCard" hidden></div>
     <div class="paper" id="paper"></div>
     <p class="hint">Tocá una posición para verla en grande · <kbd>Espacio</kbd> reproduce · <kbd>1</kbd>–<kbd>7</kbd> abre una posición · <kbd>[</kbd><kbd>]</kbd> variante</p>
-  </main>
+  </div>
   </div>
   </div>
 
@@ -125,6 +127,7 @@
 
 <!-- ============ EJERCITACIÓN TÉCNICA ============ -->
 <section class="view" id="v-tecnica" hidden></section>
+</main>
 
 <!-- Configuración (global) -->
 <div class="sheet-pop settings" id="settings" role="dialog" aria-label="Configuración" hidden>

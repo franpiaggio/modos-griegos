@@ -44,14 +44,14 @@ export function route(sub) {
 // ---------------------------------------------------------------- inicio
 function badge(id) {
   const s = stats(id);
-  if (!s) return '<span class="badge new">Nuevo</span>';
+  if (!s) return '';
   return `<span class="badge">Último ${s.last}% · mejor ${s.best}%</span>`;
 }
 function renderHome() {
   root.innerHTML = `<div class="t-wrap">
-    <header class="t-intro"><small class="eyebrow">Teoría · explicación + práctica</small><h1>Ejercitación teórica</h1><p>Cada tema tiene dos partes:</p><div class="two-parts"><span>${BOOK}<b>Teoría</b> la explicación, con tablas y ejemplos para escuchar</span><span>${PENCIL}<b>Práctica</b> sesiones de 10 preguntas con corrección inmediata</span></div></header>
+    <header class="t-intro"><h1>Ejercitación teórica</h1><p>Cada tema tiene dos partes:</p><div class="two-parts"><span>${BOOK}<b>Teoría</b> la explicación, con tablas y ejemplos para escuchar</span><span>${PENCIL}<b>Práctica</b> sesiones de 10 preguntas con corrección inmediata</span></div></header>
     ${GROUPS.map((g) => `<section class="t-group"><h2>${g}</h2><p class="g-info">${GROUP_INFO[g]}</p><div class="cards">
-      ${Object.entries(EXERCISES).filter(([, e]) => e.group === g).map(([id, e]) => `<a class="card" href="#/teoria/${id}"><span class="card-ico">${icon(id)}</span><b>${e.title}</b><span>${e.desc}</span><span class="parts"><span>${BOOK}Teoría</span><span>${PENCIL}${id === 'impro' ? 'Explorador · Práctica' : 'Práctica'}</span></span>${id === 'impro' ? '' : badge(id)}</a>`).join('')}
+      ${Object.entries(EXERCISES).filter(([, e]) => e.group === g).map(([id, e]) => `<a class="card" href="#/teoria/${id}"><span class="card-ico">${icon(id)}</span><b>${e.title}</b><span>${e.desc}</span>${id === 'impro' ? '' : badge(id)}</a>`).join('')}
     </div></section>`).join('')}
   </div>`;
 }
@@ -99,7 +99,7 @@ function renderLesson(id) {
 function head(id, title, group, extra = '') {
   return `<header class="t-head">
     <a class="ib" href="#/teoria" aria-label="Volver a Teoría">${ICON.back}</a>
-    <div class="t-title"><small>${group}</small><h1>${title}</h1></div>
+    <div class="t-title"><h1>${title}</h1></div>
     ${extra}
     <button class="ib" data-cfg aria-expanded="false" aria-label="Opciones del ejercicio" title="Opciones">${GEAR}</button>
   </header>`;
@@ -174,23 +174,23 @@ function drawExplorer(el) {
   };
   el.innerHTML = `<div class="ex-pick">
       <label class="ex-key">Tonalidad <select data-key>${IMPRO_KEYS.map((n, i) => `<option value="${i}" ${i === explorer.key ? 'selected' : ''}>${N(n)} mayor</option>`).join('')}</select></label>
-      ${groups.map((g) => `<div class="ex-g"><span>${g}</span><div class="chips">${ctxs.filter((x) => x.group === g).map((x) => `<button data-ctx="${x.id}" class="${x.id === c.id ? 'on' : ''}" aria-pressed="${x.id === c.id}"><b>${esc(x.label)}</b> ${esc(CH(x.root, x.chord))}</button>`).join('')}</div></div>`).join('')}
+      ${groups.map((g) => `<details class="ex-g" ${g === c.group || g === groups[0] ? 'open' : ''}><summary>${g}</summary><div class="chips">${ctxs.filter((x) => x.group === g).map((x) => `<button data-ctx="${x.id}" class="${x.id === c.id ? 'on' : ''}" aria-pressed="${x.id === c.id}"><b>${esc(x.label)}</b> ${esc(CH(x.root, x.chord))}</button>`).join('')}</div></details>`).join('')}
     </div>
     <article class="ex-card">
       <header class="ex-chord"><div><b>${esc(CH(c.root, c.chord))}</b><span>${esc(c.label)} · ${esc(c.fn)}</span></div><button class="ib" data-chord aria-label="Escuchar acorde">${ICON.sound}</button></header>
       <p class="ex-notes">${chordNotes.map((n, i) => `<span>${N(n)}<small>${c.chord.intervals[i]}</small></span>`).join('')}</p>
-      <h3>Escala principal</h3><ul class="ex-list">${scaleRow(main, true)}</ul>
+      <h2 class="ex-h">Escala principal</h2><ul class="ex-list">${scaleRow(main, true)}</ul>
       <div class="ex-tags"><span>Tensiones: <b>${tensions.join(', ') || '—'}</b></span><span>A evitar: <b>${avoid.join(', ') || 'ninguna'}</b></span></div>
       ${c.note ? `<p class="ex-note">${esc(c.note)}</p>` : ''}
-      ${c.alt.length ? `<h3>Alternativas</h3><ul class="ex-list">${c.alt.map((id) => scaleRow(scaleById(id), false)).join('')}</ul>` : ''}
-      ${pentas.length ? `<h3>Pentatónicas que entran en la escala</h3><ul class="ex-list">${pentas.map((p) => {
+      ${c.alt.length ? `<h2 class="ex-h">Alternativas</h2><ul class="ex-list">${c.alt.map((id) => scaleRow(scaleById(id), false)).join('')}</ul>` : ''}
+      ${pentas.length ? `<h2 class="ex-h">Pentatónicas que entran en la escala</h2><ul class="ex-list">${pentas.map((p) => {
         const mr = mainNotes.find((n) => notePc(n) === p.majorPc);
         const mi = transpose(mr, '6');
         const labs = ['1', '2', '3', '5', '6'].map((iv) => labelOf.get((p.majorPc + ivSemis(iv)) % 12));
         return `<li><div><b>${N(mr)} pentatónica mayor</b><small>= ${N(mi)} pentatónica menor · sobre ${esc(CH(c.root, c.chord))}: ${labs.join(' ')}</small></div>
           <span class="row-act"><a class="plain sm" href="${libLink('escala', p.majorPc, 'penta-mayor')}">Ver en el mástil</a></span></li>`;
       }).join('')}</ul>` : ''}
-      ${sups.length ? `<h3>Arpegios superpuestos</h3><ul class="ex-list">${sups.map((s) => {
+      ${sups.length ? `<h2 class="ex-h">Arpegios superpuestos</h2><ul class="ex-list">${sups.map((s) => {
         const r = transpose(c.root, main.intervals[s.deg]);
         const bad = s.tones.filter((t) => avoidSet.has(t));
         return `<li class="${bad.length ? 'warn' : ''}"><div><b>${esc(CH(r, s.chord))}</b><small>Aporta ${s.tones.join(' ')}${bad.length ? ` · incluye ${bad.join(', ')} (a evitar)` : ''}</small></div>

@@ -20,12 +20,12 @@ svg { flex: none; }
   border-bottom: 1px solid rgba(0,0,0,.07); }
 .brand { display: flex; flex-direction: column; gap: 2px; white-space: nowrap; min-width: 0; }
 .brand b { font: 700 15px/1 Oswald, sans-serif; letter-spacing: .02em; text-transform: uppercase; }
-.brand span { font-size: 11.5px; color: #8a8a93; font-weight: 500; }
+.brand span { font-size: 11.5px; color: var(--faint); font-weight: 500; }
 .pick { display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px 0 14px; margin-left: 8px;
   border: 1px solid var(--line); border-radius: var(--radius); background: #fff; cursor: pointer; min-width: 0; transition: border-color .15s, box-shadow .15s; }
 .pick:hover { border-color: #cfcfd6; }
 .pick[aria-expanded="true"] { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(27,27,31,.07); }
-.pick-kind { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #8a8a93; }
+.pick-kind { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
 .pick-name { font: 700 17px/1 Oswald, sans-serif; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pick svg, .ib svg, .toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .tools { margin-left: auto; display: flex; align-items: center; gap: 8px; }
@@ -51,7 +51,7 @@ svg { flex: none; }
   box-shadow: 0 18px 50px rgba(0,0,0,.14), 0 2px 6px rgba(0,0,0,.05); animation: pop .16s ease-out; }
 @keyframes pop { from { opacity: 0; transform: translate(-50%, -6px); } }
 .scrim { position: fixed; inset: 0; z-index: 39; background: rgba(20,20,24,.08); }
-.lbl { margin: 16px 2px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #8a8a93; }
+.lbl { margin: 16px 2px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
 .seg { display: flex; gap: 2px; padding: 3px; background: var(--soft); border-radius: 10px; }
 .seg button { flex: 1; border: 0; background: none; padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--muted); font-weight: 500; white-space: nowrap; }
 .seg button:hover { color: var(--ink); }
@@ -61,24 +61,24 @@ svg { flex: none; }
 .roots button:hover { border-color: #cfcfd6; }
 .roots button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
 .types { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-.types .grp { grid-column: 1 / -1; margin: 6px 2px 0; font-size: 11px; color: #a0a0a8; font-weight: 600; }
+.types .grp { grid-column: 1 / -1; margin: 6px 2px 0; font-size: 11px; color: var(--faint); font-weight: 600; }
 .types button { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 12px; border: 1px solid var(--line); background: #fff; border-radius: 10px; cursor: pointer; }
 .types button:hover { border-color: #cfcfd6; }
 .types button .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; }
 .types button b { font-weight: 600; }
-.types button small { display: block; color: #8a8a93; font-size: 12px; }
+.types button small { display: block; color: var(--faint); font-size: 12px; }
 .types button.on { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 .settings { left: auto; right: 12px; transform: none; width: min(420px, calc(100vw - 24px)); animation: popr .16s ease-out; }
 @keyframes popr { from { opacity: 0; transform: translateY(-6px); } }
 .settings .row { display: grid; gap: 8px; margin-bottom: 14px; }
 .settings .row > span { font-size: 12px; font-weight: 600; color: var(--muted); }
-.settings .foot { margin: 6px 0 0; font-size: 12px; color: #8a8a93; line-height: 2; }
+.settings .foot { margin: 6px 0 0; font-size: 12px; color: var(--faint); line-height: 2; }
 
 /* ---------- hoja ---------- */
 main { padding: 24px 16px 120px; overflow-x: auto; }
 .paper { width: var(--paper-w); max-width: none; margin: 0 auto; background: #fff; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 30px rgba(0,0,0,.08); transition: width .2s ease; }
 .paper svg { display: block; width: 100%; height: auto; }
-.hint { text-align: center; color: #8a8a93; font-size: 12.5px; margin: 18px 0 0; }
+.hint { text-align: center; color: var(--faint); font-size: 12.5px; margin: 18px 0 0; }
 
 /* estilos del dibujo (iguales a v2) */
 .num { font-family: 'Questrial', 'Century Gothic', sans-serif; font-size: 15px; text-anchor: middle; fill: #1E1E1E; }
@@ -135,7 +135,7 @@ main { padding: 24px 16px 120px; overflow-x: auto; }
 .mini-seg { display: flex; gap: 2px; padding: 3px; background: var(--soft); border-radius: 9px; }
 .mini-seg button { border: 0; background: none; min-width: 32px; height: 28px; border-radius: 7px; cursor: pointer; color: var(--muted); font-weight: 600; }
 .mini-seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.1); }
-.toggle { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; border: 0; background: none; color: #9a9aa3; cursor: pointer; }
+.toggle { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; border: 0; background: none; color: var(--faint); cursor: pointer; }
 .toggle[aria-pressed="true"] { background: var(--soft); color: var(--ink); }
 
 /* ---------- responsive ---------- */
@@ -197,9 +197,9 @@ main { padding: 24px 16px 120px; overflow-x: auto; }
 .dl-menu { position: absolute; right: 0; top: 46px; z-index: 5; min-width: 220px; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 36px rgba(0,0,0,.14); }
 .dl-menu button { display: block; width: 100%; text-align: left; padding: 9px 10px; border: 0; background: none; border-radius: 8px; cursor: pointer; font-weight: 500; }
 .dl-menu button:hover, .dl-menu button:focus-visible { background: var(--soft); }
-.dl-menu small { display: block; font-weight: 400; color: #8a8a93; font-size: 12px; }
+.dl-menu small { display: block; font-weight: 400; color: var(--faint); font-size: 12px; }
 .exp { display: grid; gap: 6px; }
-.settings .note { color: #8a8a93; font-size: 12px; }
+.settings .note { color: var(--faint); font-size: 12px; }
 .toast { position: fixed; z-index: 60; left: 50%; top: 76px; transform: translateX(-50%); padding: 9px 14px; background: var(--ink); color: #fff; border-radius: 10px; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
 @media print { .toast, .dl-menu { display: none !important; } }
 

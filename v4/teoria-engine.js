@@ -85,7 +85,7 @@ export class Session {
     const pct = (this.i / this.count) * 100;
     this.el.innerHTML = `
       <div class="q-head">
-        <div class="q-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${this.count}" aria-valuenow="${this.i}"><span style="width:${pct}%"></span></div>
+        <div class="q-progress" role="progressbar" aria-label="Progreso de la sesión" aria-valuemin="0" aria-valuemax="${this.count}" aria-valuenow="${this.i}"><span style="transform:scaleX(${pct / 100})"></span></div>
         <div class="q-meta"><span>${this.i + 1} de ${this.count}</span><span>${this.right} bien${this.streak > 1 ? ` · racha ${this.streak}` : ''}</span></div>
       </div>
       <article class="q-card ${this.result ? (this.result.ok ? 'is-ok' : 'is-bad') : ''}">
@@ -208,7 +208,7 @@ export class Session {
     this.el.innerHTML = `<article class="q-card summary">
       <div class="sum-pct"><b>${pct}%</b><span>${this.right} de ${this.count} · ${msg}</span></div>
       <div class="sum-meta"><span>Mejor: <b>${s?.best ?? pct}%</b></span><span>Racha máx.: <b>${this.bestStreak}</b></span><span>Sesiones: <b>${s?.sessions ?? 1}</b></span></div>
-      ${this.mistakes.length ? `<h3>Para repasar</h3><ul class="mist">${this.mistakes.map((m) => `<li><span>${m.prompt}</span><b>${m.answer}</b></li>`).join('')}</ul>` : ''}
+      ${this.mistakes.length ? `<h2 class="sum-h">Para repasar</h2><ul class="mist">${this.mistakes.map((m) => `<li><span>${m.prompt}</span><b>${m.answer}</b></li>`).join('')}</ul>` : ''}
       <div class="fb-act"><button class="plain" data-exit>Volver</button><button class="primary" data-again>Otra vez <kbd>Enter</kbd></button></div>
     </article>`;
     motion.countTo(this.el.querySelector('.sum-pct b'), pct, '%');

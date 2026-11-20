@@ -88,8 +88,8 @@ const back = (label = 'Técnica', href = '#/tecnica') => { crumb = [label, href]
 const head = (title, sub, extra = '') => {
   const c = crumb;
   crumb = ['Técnica', '#/tecnica'];
-  if (title === 'Ejercitación técnica') return `<header class="t-intro tc-intro"><small class="eyebrow">Técnica · práctica con la guitarra</small><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</header>`;
-  return `<header class="t-head tc-head2"><a class="ib" href="${c[1]}" aria-label="Volver a ${c[0]}">${ICON.back}</a><div class="t-title"><small>${c[0]}</small><h1>${title}</h1></div>${extra}</header>${sub ? `<p class="tc-sub">${sub}</p>` : ''}`;
+  if (title === 'Ejercitación técnica') return `<header class="t-intro tc-intro"><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</header>`;
+  return `<header class="t-head tc-head2"><a class="ib" href="${c[1]}" aria-label="Volver a ${c[0]}">${ICON.back}</a><div class="t-title"><h1>${title}</h1></div>${extra}</header>${sub ? `<p class="tc-sub">${sub}</p>` : ''}`;
 };
 
 // ---------------------------------------------------------------- inicio
@@ -159,15 +159,18 @@ function viewMetro() {
       </div>
     </div>
     <div class="mt-grid">
-      <section class="tc-box"><h3>Compás</h3>
+      <section class="tc-box"><h2>Compás</h2>
         <div class="tc-chips" id="mtMeter">${METERS.map((m) => `<button data-meter="${m.id}">${m.id}</button>`).join('')}</div>
-        <div class="tc-step"><span>Pulsos por compás</span><button class="ib sm" data-beats="-1">${ICON.minus}</button><b id="mtBeatsN">${c.beats}</b><button class="ib sm" data-beats="1">${ICON.plus}</button></div>
+        <div class="tc-step"><span>Pulsos por compás</span><button class="ib sm" data-beats="-1" aria-label="Un pulso menos">${ICON.minus}</button><b id="mtBeatsN">${c.beats}</b><button class="ib sm" data-beats="1" aria-label="Un pulso más">${ICON.plus}</button></div>
         <p class="tc-note" id="mtUnit"></p>
       </section>
-      <section class="tc-box"><h3>Subdivisión</h3>
+      <section class="tc-box"><h2>Subdivisión</h2>
         <div class="seg" id="mtSub">${SUBS.map(([v, n, s]) => `<button data-sub="${v}" title="${n}"><span class="sym">${s}</span> ${n}</button>`).join('')}</div>
       </section>
-      <section class="tc-box"><h3><label class="sw"><input type="checkbox" id="trOn"> Entrenador de velocidad</label></h3>
+    </div>
+    <details class="mt-more" id="mtMore" ${store.get('tec.mtMore', false) ? 'open' : ''}><summary>Entrenamiento: subir tempo, compases en silencio y temporizador</summary>
+    <div class="mt-grid">
+      <section class="tc-box"><h2><label class="sw"><input type="checkbox" id="trOn"> Entrenador de velocidad</label></h2>
         <div class="tc-form">
           <label>Subir <input type="number" min="1" max="20" id="trStep"> bpm</label>
           <label>cada <input type="number" min="1" max="32" id="trEvery"> compases</label>
@@ -175,18 +178,19 @@ function viewMetro() {
         </div>
         <div class="seg sm" id="trMode"><button data-mode="up">Subir y mantener</button><button data-mode="mountain">Montaña (sube y baja)</button></div>
       </section>
-      <section class="tc-box"><h3><label class="sw"><input type="checkbox" id="gpOn"> Compases en silencio</label></h3>
+      <section class="tc-box"><h2><label class="sw"><input type="checkbox" id="gpOn"> Compases en silencio</label></h2>
         <div class="tc-form">
           <label><input type="number" min="1" max="16" id="gpPlay"> con clic</label>
           <label><input type="number" min="1" max="16" id="gpMute"> en silencio</label>
         </div>
         <p class="tc-note">Sirve para comprobar si mantenés el tempo solo: el clic vuelve a entrar y te muestra si te adelantaste.</p>
       </section>
-      <section class="tc-box"><h3>Temporizador de práctica</h3>
+      <section class="tc-box"><h2>Temporizador de práctica</h2>
         <div class="tc-chips" id="tmChips">${[0, 5, 10, 15, 20, 30].map((m) => `<button data-min="${m}">${m ? m + ' min' : 'Sin límite'}</button>`).join('')}</div>
         <p class="tc-note" id="tmLeft"></p>
       </section>
     </div>
+    </details>
   </div>`;
   const $ = (id) => root.querySelector('#' + id);
 
@@ -388,7 +392,7 @@ function viewChord(mode) {
     const hdr = g !== grp ? `<div class="fx-grp">${g}</div>` : '';
     grp = g;
     const addsLbl = mode === 'escalas' ? (x.adds ? `tensiones ${x.adds}` : 'solo notas del acorde') : (x.kind === 'own' ? x.adds : `${x.note}: ${x.adds}`);
-    return `${hdr}<button class="fx-item${key(x) === key(sel) ? ' on' : ''}" data-key="${key(x)}"><b>${x.name}${x.first ? ' <em>principal</em>' : ''}</b><small>${mode === 'escalas' ? `característica: ${esc(x.note)} · ` : ''}${addsLbl}</small></button>`;
+    return `${hdr}<button class="fx-item${key(x) === key(sel) ? ' on' : ''}" aria-pressed="${key(x) === key(sel)}" data-key="${key(x)}"><b>${x.name}${x.first ? ' <em>principal</em>' : ''}</b><small>${mode === 'escalas' ? `Nota característica: ${esc(x.note)}` : addsLbl}</small></button>`;
   }).join('');
   const ex = mode === 'escalas' ? extras(st.chord) : [];
 
@@ -411,7 +415,7 @@ function viewChord(mode) {
       ? `Apoyá las notas del acorde (<b>${chord.intervals.join(' ')}</b>) en los tiempos fuertes; las demás son tensiones (color)${imp.avoid?.length ? `. Notas a evitar o de paso: ${imp.avoid.join(', ')}` : ''}.`
       : `Empezá por el arpegio del acorde en las 7 posiciones. Después probá las extensiones: las notas <b>9, 11, 13</b> suenan como tensiones sobre el acorde.`}</p>
     <div class="fx-body">
-      <div class="fx-list" role="listbox" aria-label="Opciones">${items}${ex.length ? `<p class="tc-note">También: ${ex.map((s) => s.name).join(', ')} (simétricas, sin las 7 figuras).</p>` : ''}</div>
+      <div class="fx-list" role="group" aria-label="Opciones">${items}${ex.length ? `<p class="tc-note">También: ${ex.map((s) => s.name).join(', ')} (simétricas, sin las 7 figuras).</p>` : ''}</div>
       <div class="fx-sheet"><div class="fx-pos" id="fxPos"></div><div class="fx-paper" id="fxPaper"></div></div>
     </div>
   </div>`;
@@ -459,7 +463,7 @@ function viewChord(mode) {
     if (b.dataset.key) {
       st.sel = b.dataset.key; save();
       sel = list.find((x) => key(x) === st.sel);
-      root.querySelectorAll('.fx-item').forEach((x) => x.classList.toggle('on', x === b));
+      root.querySelectorAll('.fx-item').forEach((x) => x.setAttribute('aria-pressed', x === b) || x.classList.toggle('on', x === b));
       drawSheet();
       if (window.innerWidth < 900) $('fxPos').scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
@@ -501,7 +505,7 @@ function viewExercises() {
         <div class="ex-top"><b>${ex.name}</b><span class="ex-mano">${MANO_NAME[ex.mano]}</span></div>
         <p>${ex.desc}</p>
         <div class="ex-tags">${ex.obj.map((o) => `<span class="chip">${OBJ_NAME[o]}</span>`).join('')}<span class="ex-goal">${s?.best ? `récord ${s.best} / ${ex.target} bpm` : `objetivo ${ex.target} bpm`}</span></div>
-        <div class="ex-bar"><i style="width:${pct}%"></i></div>
+        <div class="ex-bar"><i style="transform:scaleX(${pct / 100})"></i></div>
       </a>`;
     }).join('') || '<p class="tc-note">No hay ejercicios con ese filtro.</p>'}</div>
   </div>`;
@@ -550,7 +554,7 @@ function viewExercise(id) {
         <div class="mt-big"><b id="exBpm">${s.bpm}</b><span>bpm · objetivo ${ex.target}</span></div>
         <button class="ib" data-eb="2" aria-label="Más rápido">${ICON.plus}</button>
       </div>
-      <div class="ex-bar big"><i id="exProg" style="width:${Math.min(100, (s.bpm / ex.target) * 100)}%"></i></div>
+      <div class="ex-bar big"><i id="exProg" style="transform:scaleX(${Math.min(1, s.bpm / ex.target)})"></i></div>
       <div class="ex-btns">
         <button class="tc-play" id="exPlay" data-space>${ICON.play}${ICON.stop}<span>Metrónomo</span></button>
         <button class="plain" id="exListen">${ICON.sound}<span>Escuchar</span></button>
@@ -564,14 +568,14 @@ function viewExercise(id) {
       <div class="ex-rec" id="exRec"></div>
     </section>
     <div class="ex-cols">
-      <section><h3>Cómo practicarlo</h3><ol>${ex.steps.map((x) => `<li>${x}</li>`).join('')}</ol></section>
-      <section><h3>Criterios de calidad</h3><p class="tc-note">Antes de marcar "limpio", revisá:</p>${ex.criteria.map((x, i) => `<label class="ex-crit"><input type="checkbox" data-crit="${i}"> ${x}</label>`).join('')}</section>
+      <section><h2>Cómo practicarlo</h2><ol>${ex.steps.map((x) => `<li>${x}</li>`).join('')}</ol></section>
+      <section><h2>Criterios de calidad</h2><p class="tc-note">Antes de marcar "limpio", revisá:</p>${ex.criteria.map((x, i) => `<label class="ex-crit"><input type="checkbox" data-crit="${i}"> ${x}</label>`).join('')}</section>
     </div>
   </div>`;
   const $ = (q) => root.querySelector('#' + q);
   function sync() {
     $('exBpm').textContent = s.bpm;
-    $('exProg').style.width = Math.min(100, (s.bpm / ex.target) * 100) + '%';
+    $('exProg').style.transform = `scaleX(${Math.min(1, s.bpm / ex.target)})`;
     $('exReps').innerHTML = Array.from({ length: reps }, (_, i) => `<i class="${i < s.reps ? 'on' : ''}"></i>`).join('') + `<span>${s.reps}/${reps} limpias a ${s.bpm}</span>`;
     $('exRec').innerHTML = s.best ? `<div><small>Récord limpio</small><b>${s.best} bpm</b>${s.last ? `<small>${s.last.split('-').reverse().join('/')}</small>` : ''}</div>${sparkline(s.log, ex.target)}` : '<small>Todavía sin registro: marcá "Salió limpio" cuando lo toques sin errores.</small>';
     $('exPlay').classList.toggle('playing', metro.running);
@@ -689,3 +693,4 @@ function viewVoicings() {
     save(); redraw();
   });
 }
+document.addEventListener('toggle', (e) => { if (e.target.id === 'mtMore') store.set('tec.mtMore', e.target.open); }, true);

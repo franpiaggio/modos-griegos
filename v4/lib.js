@@ -72,7 +72,9 @@ function render() {
   if (drawn) motion.swap(paper);
   drawn = true;
   markSelected();
-  $('pickKind').textContent = `${state.kind === 'escala' ? 'Escala' : 'Arpegio'} · ${state.kind === 'escala' ? FAMILIES.find((f) => f.id === data.meta.fam).long : data.meta.group}`;
+  $('pickKind').textContent = state.kind === 'escala'
+    ? [FAMILIES.find((f) => f.id === data.meta.fam).long, data.meta.alias].filter(Boolean).join(' · ')
+    : `Arpegio · ${data.meta.group === 'Con 7ma' ? 'con 7ma' : data.meta.group.toLowerCase()} · ${data.meta.intervals.join(' ')}`;
   $('pickName').textContent = opts.display;
   if (document.body.dataset.sec === 'info') document.title = `${opts.display} – Guitarra`;
   renderPicker();
