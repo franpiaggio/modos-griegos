@@ -1,9 +1,12 @@
 // Sección "Ejercitación teórica": inicio con tarjetas, ejercicios con sesión de preguntas y explorador de improvisación.
 import { notePc, transpose, spellAll, scaleById, pentatonicsIn, superimpositions, ivSemis, toExt, LETTERS, note } from './theory.js';
 import { prefs, onPrefs, store, esc, ICON } from './ui.js';
+import { icon } from './icons.js';
 import * as audio from './audio.js';
 import { Session, settingsHtml, bindSettings, stats, N, NL } from './teoria-engine.js';
 import { EXERCISES, GROUPS, CH, contexts, tensionsOf, midisOf, scaleLabel } from './teoria-gen.js';
+import { lessonHtml } from './teoria-lessons.js';
+import * as motion from './motion.js';
 
 let root = null;
 let session = null;
@@ -29,10 +32,13 @@ export function route(sub) {
   current = sub || '';
   session = null;
   if (!sub) return renderHome();
-  if (sub === 'impro') return renderImpro('explorar');
-  if (sub === 'impro-quiz') return renderImpro('quiz');
-  if (EXERCISES[sub]) return renderExercise(sub);
-  renderHome();
+  if (sub === 'impro-quiz') sub = 'impro/practica';
+  const [id, mode = ''] = sub.split('/');
+  if (!EXERCISES[id]) return renderHome();
+  if (id === 'impro' && mode === 'explorar') return renderImpro('explorar');
+  if (id === 'impro' && mode === 'practica') return renderImpro('quiz');
+  if (mode === 'practica') return renderExercise(id);
+  return renderLesson(id);
 }
 
 // ---------------------------------------------------------------- inicio
@@ -43,9 +49,9 @@ function badge(id) {
 }
 function renderHome() {
   root.innerHTML = `<div class="t-wrap">
-    <header class="t-intro"><h1>Ejercitación teórica</h1><p>Sesiones cortas de 10 preguntas con corrección inmediata. Cada ejercicio se configura desde su botón de opciones.</p></header>
+    <header class="t-intro"><small class="eyebrow">Teoría · explicación + práctica</small><h1>Ejercitación teórica</h1><p>Cada tema tiene dos partes:</p><div class="two-parts"><span>${BOOK}<b>Teoría</b> la explicación, con tablas y ejemplos para escuchar</span><span>${PENCIL}<b>Práctica</b> sesiones de 10 preguntas con corrección inmediata</span></div></header>
     ${GROUPS.map((g) => `<section class="t-group"><h2>${g}</h2><p class="g-info">${GROUP_INFO[g]}</p><div class="cards">
-      ${Object.entries(EXERCISES).filter(([, e]) => e.group === g).map(([id, e]) => `<a class="card" href="#/teoria/${id}"><b>${e.title}</b><span>${e.desc}</span>${id === 'impro' ? '<span class="badge">Explorador + práctica</span>' : badge(id)}</a>`).join('')}
+      ${Object.entries(EXERCISES).filter(([, e]) => e.group === g).map(([id, e]) => `<a class="card" href="#/teoria/${id}"><span class="card-ico">${icon(id)}</span><b>${e.title}</b><span>${e.desc}</span><span class="parts"><span>${BOOK}Teoría</span><span>${PENCIL}${id === 'impro' ? 'Explorador · Práctica' : 'Práctica'}</span></span>${id === 'impro' ? '' : badge(id)}</a>`).join('')}
     </div></section>`).join('')}
   </div>`;
 }
@@ -68,6 +74,28 @@ function cfgOf(id) {
 }
 const COUNT_GROUP = { key: 'count', label: 'Preguntas por sesión', options: [[10, '10'], [20, '20']] };
 
+const BOOK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5M8 7h8M8 10.5h6"/></svg>';
+const PENCIL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.5-1L19 8.5 15.5 5 5 15.5zM13.5 7l3.5 3.5"/></svg>';
+const COMPASS = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>';
+// Cada tema tiene dos partes bien separadas: la explicación (Teoría) y los ejercicios (Práctica).
+function modeTabs(id, active) {
+  const tabs = [['', 'Teoría', BOOK, 'Explicación con tablas y ejemplos']];
+  if (id === 'impro') tabs.push(['explorar', 'Explorador', COMPASS, 'Qué tocar sobre cada acorde']);
+  tabs.push(['practica', 'Práctica', PENCIL, 'Preguntas con corrección']);
+  return `<nav class="mode-tabs" aria-label="Teoría o práctica">${tabs.map(([m, t, ic, d]) => `<a href="#/teoria/${id}${m ? '/' + m : ''}" class="${m === active ? 'on' : ''}" ${m === active ? 'aria-current="page"' : ''} title="${d}">${ic}<span>${t}</span></a>`).join('')}</nav>`;
+}
+function renderLesson(id) {
+  const ex = EXERCISES[id];
+  root.innerHTML = `<div class="t-wrap narrow">${head(id, ex.title, ex.group)}${modeTabs(id, '')}
+    ${lessonHtml(id)}
+    <div class="lesson-cta"><span>¿Listo? Practicá lo que acabás de leer.</span><a class="primary" href="#/teoria/${id}/${id === 'impro' ? 'explorar' : 'practica'}">${id === 'impro' ? 'Ir al explorador' : 'Ir a la práctica'} ${ICON.next}</a></div></div>`;
+  root.querySelector('[data-cfg]').hidden = true;
+  root.querySelectorAll('[data-play]').forEach((b) => b.addEventListener('click', () => {
+    const m = b.dataset.play.split(',').map(Number);
+    if (b.dataset.mode === 'chord') audio.playChord(m); else audio.playSeq(m, { step: 0.38 });
+  }));
+  root.querySelector('[data-cad]')?.addEventListener('click', () => audio.playSeq([[48, 52, 55, 60], [53, 57, 60, 65], [55, 59, 62, 67], [48, 52, 55, 60]], { step: 0.9, dur: 0.8 }));
+}
 function head(id, title, group, extra = '') {
   return `<header class="t-head">
     <a class="ib" href="#/teoria" aria-label="Volver a Teoría">${ICON.back}</a>
@@ -83,7 +111,7 @@ function renderExercise(id, area = null, quizOnly = false) {
   const groups = [...ex.settings, COUNT_GROUP];
   const host = area || root;
   if (!area) {
-    host.innerHTML = `<div class="t-wrap narrow">${head(id, ex.title, ex.group)}<div class="cfg-panel" hidden></div><div class="q-area"></div></div>`;
+    host.innerHTML = `<div class="t-wrap narrow">${head(id, ex.title, ex.group)}${modeTabs(id, 'practica')}<div class="cfg-panel" hidden></div><div class="q-area"></div></div>`;
   }
   const panel = host.querySelector('.cfg-panel');
   const qa = host.querySelector('.q-area');
@@ -111,9 +139,8 @@ const IMPRO_KEYS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'F', 'Bb', 'Eb', 'Ab', '
 const libLink = (kind, pc, id) => `?k=${kind}&r=${pc}&t=${id}#/info`;
 
 function renderImpro(tab) {
-  root.innerHTML = `<div class="t-wrap">${head('impro', 'Improvisación', 'Improvisación', `<div class="seg t-tabs" role="tablist"><button role="tab" data-tab="explorar" class="${tab === 'explorar' ? 'on' : ''}">Explorador</button><button role="tab" data-tab="quiz" class="${tab === 'quiz' ? 'on' : ''}">Práctica</button></div>`)}
+  root.innerHTML = `<div class="t-wrap">${head('impro', 'Improvisación', 'Improvisación')}${modeTabs('impro', tab === 'quiz' ? 'practica' : 'explorar')}
     <div class="cfg-panel" hidden></div><div class="q-area"></div></div>`;
-  root.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => { location.hash = b.dataset.tab === 'quiz' ? '#/teoria/impro-quiz' : '#/teoria/impro'; }));
   const cfgBtn = root.querySelector('[data-cfg]');
   if (tab === 'quiz') { current = 'impro-quiz'; return renderExercise('impro', root); }
   cfgBtn.hidden = true;

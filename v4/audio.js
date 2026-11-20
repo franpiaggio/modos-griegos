@@ -10,6 +10,7 @@ function ensure() {
     master.gain.value = 0.55;
     const comp = ctx.createDynamicsCompressor();
     master.connect(comp).connect(ctx.destination);
+    setTimeout(preload);
   }
   if (ctx.state === 'suspended') ctx.resume();
   return ctx;
@@ -43,12 +44,40 @@ function pluckBuffer(midi) {
   return buf;
 }
 
-function playAt(midi, when, dur) {
+// ---------------------------------------------------------------- guitarra sampleada
+// Muestras de guitarra acústica (tonejs-instruments, CC-BY 3.0), una cada 3 semitonos; las notas
+// intermedias se obtienen cambiando la velocidad de reproducción (como máximo ±1 semitono).
+const SAMPLES = { 40: 'E2', 43: 'G2', 46: 'As2', 49: 'Cs3', 52: 'E3', 55: 'G3', 58: 'As3', 61: 'Cs4', 64: 'E4', 67: 'G4', 70: 'As4', 73: 'Cs5' };
+const sampleBuf = new Map();
+let loading = null;
+export function preload() {
+  ensure();
+  loading ||= Promise.all(Object.entries(SAMPLES).map(async ([m, name]) => {
+    const url = new URL(`./samples/guitarra/${name}.mp3`, import.meta.url);
+    const buf = await ctx.decodeAudioData(await (await fetch(url)).arrayBuffer());
+    sampleBuf.set(Number(m), buf);
+  })).catch((e) => { console.warn('Sin muestras de guitarra, uso sonido sintético', e); });
+  return loading;
+}
+// Fuente de sonido para una nota: muestra real si está cargada; si no, la cuerda sintética.
+function source(midi) {
   const src = ctx.createBufferSource();
-  src.buffer = pluckBuffer(midi);
+  if (sampleBuf.size) {
+    let best = null;
+    sampleBuf.forEach((_, m) => { if (best === null || Math.abs(m - midi) < Math.abs(best - midi) || (Math.abs(m - midi) === Math.abs(best - midi) && m < best)) best = m; });
+    src.buffer = sampleBuf.get(best);
+    src.playbackRate.value = 2 ** ((midi - best) / 12);
+  } else {
+    src.buffer = pluckBuffer(midi);
+  }
+  return src;
+}
+
+function playAt(midi, when, dur) {
+  const src = source(midi);
   const g = ctx.createGain();
   g.gain.setValueAtTime(0.9, when);
-  g.gain.setTargetAtTime(0, when + dur * 1.6, 0.08);
+  g.gain.setTargetAtTime(0, when + dur * 1.6, 0.16);
   src.connect(g).connect(master);
   src.start(when);
   src.stop(when + dur * 1.6 + 0.6);
@@ -119,11 +148,10 @@ export function out() { ensure(); return master; }
 // Una nota en un instante dado (segundos de AudioContext). Devuelve la fuente para poder detenerla.
 export function noteAt(midi, when, dur = 0.5, gain = 0.9) {
   ensure();
-  const src = ctx.createBufferSource();
-  src.buffer = pluckBuffer(midi);
+  const src = source(midi);
   const g = ctx.createGain();
   g.gain.setValueAtTime(gain, when);
-  g.gain.setTargetAtTime(0, when + dur, 0.09);
+  g.gain.setTargetAtTime(0, when + dur, 0.16);
   src.connect(g).connect(master);
   src.start(when);
   src.stop(when + dur + 0.7);

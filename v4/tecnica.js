@@ -1,5 +1,6 @@
 // Ejercitación técnica: metrónomo, tocar sobre un acorde fijo, ejercicios por objetivo y formación de acordes.
 import { store, prefs, onPrefs, toast, esc, ICON } from './ui.js';
+import { icon } from './icons.js';
 import * as audio from './audio.js';
 import {
   SCALES, CHORDS, EXTRA_SCALES, IMPRO, FAMILIES, build, noteName, PREF, transpose, bestRoot, ivSemis, chordById,
@@ -81,8 +82,15 @@ function routeView() {
   return show(viewHome);
 }
 
-const back = (label = 'Técnica', href = '#/tecnica') => `<a class="tc-back" href="${href}">${ICON.back}<span>${label}</span></a>`;
-const head = (title, sub, extra = '') => `<header class="sec-head tc-head"><div><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</div>${extra}</header>`;
+// Encabezado igual al de Teoría: volver + sección + título; la portada usa la variante grande.
+let crumb = ['Técnica', '#/tecnica'];
+const back = (label = 'Técnica', href = '#/tecnica') => { crumb = [label, href]; return ''; };
+const head = (title, sub, extra = '') => {
+  const c = crumb;
+  crumb = ['Técnica', '#/tecnica'];
+  if (title === 'Ejercitación técnica') return `<header class="t-intro tc-intro"><small class="eyebrow">Técnica · práctica con la guitarra</small><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</header>`;
+  return `<header class="t-head tc-head2"><a class="ib" href="${c[1]}" aria-label="Volver a ${c[0]}">${ICON.back}</a><div class="t-title"><small>${c[0]}</small><h1>${title}</h1></div>${extra}</header>${sub ? `<p class="tc-sub">${sub}</p>` : ''}`;
+};
 
 // ---------------------------------------------------------------- inicio
 function viewHome() {
@@ -98,7 +106,7 @@ function viewHome() {
   ];
   root.innerHTML = `<div class="view-pad">
     ${head('Ejercitación técnica', 'Elegí una herramienta. Todas usan el mismo metrónomo y guardan tu progreso en este dispositivo.')}
-    <div class="tc-cards">${cards.map(([id, t, d, s], i) => `<a class="tc-card" href="#/tecnica/${id}"><span class="tc-n">${i + 1}</span><b>${t}</b><p>${d}</p>${s ? `<small>${s}</small>` : ''}</a>`).join('')}</div>
+    <div class="tc-cards">${cards.map(([id, t, d, s], i) => `<a class="tc-card" href="#/tecnica/${id}"><span class="card-ico">${icon(id === 'acordes' ? 'acordes2' : id)}</span><b>${t}</b><p>${d}</p>${s ? `<small>${s}</small>` : ''}</a>`).join('')}</div>
     ${recent.length ? `<h2 class="tc-h2">Últimos récords</h2><div class="tc-rec">${recent.map(([ex, s]) => `<a href="#/tecnica/ejercicios/${ex.id}"><span>${ex.name}</span><b>${s.best} bpm</b></a>`).join('')}</div>` : ''}
   </div>`;
 }

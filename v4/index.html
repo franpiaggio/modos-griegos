@@ -12,15 +12,17 @@
 <link rel="stylesheet" href="shell.css">
 <link rel="stylesheet" href="teoria.css">
 <link rel="stylesheet" href="tecnica.css">
+<link rel="stylesheet" href="polish.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2212%22 fill=%22%231E1E1E%22/%3E%3C/svg%3E">
 </head>
 <body>
 <header class="top">
   <a class="brand" href="#/info"><b>Guitarra</b><span>Teoría y práctica</span></a>
   <nav class="tabs" aria-label="Secciones">
-    <a href="#/info" data-sec="info">Información</a>
-    <a href="#/teoria" data-sec="teoria">Teoría</a>
-    <a href="#/tecnica" data-sec="tecnica">Técnica</a>
+    <span class="tab-ind" aria-hidden="true"></span>
+    <a href="#/info" data-sec="info" title="Consulta: escalas y arpegios en el mástil"><i data-ico="info"></i><span>Información</span></a>
+    <a href="#/teoria" data-sec="teoria" title="Cada tema: explicación (Teoría) y ejercicios (Práctica)"><i data-ico="teoria"></i><span>Teoría</span></a>
+    <a href="#/tecnica" data-sec="tecnica" title="Práctica con la guitarra: metrónomo, acompañamiento, ejercicios y acordes"><i data-ico="tecnica"></i><span>Técnica</span></a>
   </nav>
   <button class="ib" id="setBtn" aria-label="Configuración" title="Configuración" aria-haspopup="dialog" aria-expanded="false">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
@@ -29,12 +31,21 @@
 
 <!-- ============ INFORMACIÓN BÁSICA: escalas y arpegios en 7 (o 5) posiciones ============ -->
 <section class="view" id="v-info" hidden>
+  <div class="lib">
+  <aside class="lib-nav" id="libNav" aria-label="Escalas y arpegios">
+    <div class="ln-head"><b>Biblioteca</b><button class="ib sm" id="navClose" aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="seg" role="tablist" id="kindSeg">
+      <button role="tab" data-kind="escala">Escalas</button>
+      <button role="tab" data-kind="arpegio">Arpegios</button>
+    </div>
+    <div class="ln-list" id="types"></div>
+  </aside>
+  <div class="lib-main">
   <div class="bar">
-    <button class="pick" id="pickBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="picker">
-      <span class="pick-kind" id="pickKind">Escala</span>
-      <span class="pick-name" id="pickName">Do Jónico</span>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    <button class="nav-btn" id="pickBtn" aria-controls="libNav" aria-expanded="false" aria-label="Elegir escala o arpegio">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
     </button>
+    <div class="lib-title"><small id="pickKind">Escala · Modos griegos</small><h1 id="pickName">Do Jónico</h1></div>
     <div class="tools">
       <button class="ib" id="playBtn" aria-label="Reproducir (espacio)" title="Reproducir (espacio)">
         <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
@@ -49,21 +60,8 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
       </button>
     </div>
-    <div class="variants-row">
-      <div class="fam-seg" id="famSeg" role="tablist" aria-label="Familia"></div>
-      <nav class="variants" id="variants" aria-label="Variantes"></nav>
-    </div>
-  </div>
-
-  <div class="sheet-pop" id="picker" role="dialog" aria-label="Elegir escala o arpegio" hidden>
-    <div class="seg" role="tablist" id="kindSeg">
-      <button role="tab" data-kind="escala">Escalas</button>
-      <button role="tab" data-kind="arpegio">Arpegios</button>
-    </div>
-    <div class="lbl">Tónica</div>
-    <div class="roots" id="roots"></div>
-    <div class="lbl" id="typeLbl">Escala</div>
-    <div class="types" id="types"></div>
+    <div class="roots-row"><span class="rr-lbl">Tónica</span><div class="roots" id="roots" role="group" aria-label="Tónica"></div></div>
+    <nav class="variants" id="variants" aria-label="Variantes"></nav>
   </div>
 
   <main class="stage" id="stage">
@@ -72,6 +70,8 @@
     <div class="paper" id="paper"></div>
     <p class="hint">Tocá una posición para verla en grande · <kbd>Espacio</kbd> reproduce · <kbd>1</kbd>–<kbd>7</kbd> abre una posición · <kbd>[</kbd><kbd>]</kbd> variante</p>
   </main>
+  </div>
+  </div>
 
   <section class="focus" id="focus" tabindex="-1" hidden aria-modal="true" role="dialog" aria-labelledby="focusTitle">
     <div class="focus-top">
@@ -144,6 +144,7 @@
 
 <div class="scrim" id="scrim" hidden></div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script type="module" src="main.js"></script>
 </body>
 </html>

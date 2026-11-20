@@ -7,6 +7,7 @@
 //   answerText(), explain(), listen?() (suena antes de responder), sound?() (suena al corregir) }
 import { LETTERS, LATIN, note, noteName, notePc, sameNote } from './theory.js';
 import { prefs, store, esc, ICON } from './ui.js';
+import * as motion from './motion.js';
 
 const val = (x) => (typeof x === 'function' ? x() : x ?? '');
 export const N = (n) => noteName(n, prefs.notation);
@@ -74,6 +75,7 @@ export class Session {
     this.acc = 0;
     this.result = null;
     this.render();
+    if (this.i > 0) motion.nextCard(this.el.querySelector('.q-card'));
     if (q.listen) setTimeout(() => q.listen(), 250);
   }
   // ---- render
@@ -190,6 +192,7 @@ export class Session {
     if (r.ok) { this.right += 1; this.streak += 1; this.bestStreak = Math.max(this.bestStreak, this.streak); }
     else { this.streak = 0; this.mistakes.push({ prompt: val(q.prompt), answer: val(q.answerText) }); }
     this.render();
+    motion.feedback(this.el.querySelector('.q-card'), r.ok);
     q.sound?.();
   }
   finish() {
@@ -208,6 +211,8 @@ export class Session {
       ${this.mistakes.length ? `<h3>Para repasar</h3><ul class="mist">${this.mistakes.map((m) => `<li><span>${m.prompt}</span><b>${m.answer}</b></li>`).join('')}</ul>` : ''}
       <div class="fb-act"><button class="plain" data-exit>Volver</button><button class="primary" data-again>Otra vez <kbd>Enter</kbd></button></div>
     </article>`;
+    motion.countTo(this.el.querySelector('.sum-pct b'), pct, '%');
+    motion.enter(this.el);
     this.el.querySelector('[data-again]').addEventListener('click', () => this.restart());
     this.el.querySelector('[data-exit]').addEventListener('click', () => this.onExit?.());
     this.el.querySelector('[data-again]').focus({ preventScroll: true });

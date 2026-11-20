@@ -8,6 +8,8 @@ import { sheetSvg, layoutLegend, boxOf } from './render.js';
 import * as audio from './audio.js';
 import { pieceSvg, pngBlob, save, printPiece, zipAll, slug } from './export.js';
 import { $, store, prefs, onPrefs, toast, esc } from './ui.js';
+import * as motion from './motion.js';
+let drawn = false;
 
 const ZOOMS = [0.5, 0.6, 0.75, 0.9, 1, 1.15, 1.3, 1.5, 1.75, 2, 2.5];
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII'];
@@ -67,8 +69,10 @@ function render() {
   const svg = paper.querySelector('svg');
   document.fonts.ready.then(() => layoutLegend(svg));
   paper.classList.toggle('short', data.positions.length < 7);
+  if (drawn) motion.swap(paper);
+  drawn = true;
   markSelected();
-  $('pickKind').textContent = state.kind === 'escala' ? 'Escala' : 'Arpegio';
+  $('pickKind').textContent = `${state.kind === 'escala' ? 'Escala' : 'Arpegio'} · ${state.kind === 'escala' ? FAMILIES.find((f) => f.id === data.meta.fam).long : data.meta.group}`;
   $('pickName').textContent = opts.display;
   if (document.body.dataset.sec === 'info') document.title = `${opts.display} – Guitarra`;
   renderPicker();
@@ -173,41 +177,37 @@ function renderPicker() {
     b.setAttribute('aria-selected', on);
   });
   $('roots').innerHTML = ROOT_PCS.map((p) => `<button data-r="${p}" class="${p === state.root ? 'on' : ''}" aria-pressed="${p === state.root}">${rootLabel(p, prefs.notation)}</button>`).join('');
-  $('typeLbl').textContent = state.kind === 'escala' ? 'Escala' : 'Tipo';
+  $('roots').querySelector('.on')?.scrollIntoView({ block: 'nearest', inline: 'center' });
   let html = '';
   let grp = null;
   all().forEach((t) => {
     const g = groupOf(t);
     if (g !== grp) { grp = g; html += `<div class="grp">${state.kind === 'escala' ? FAMILIES.find((f) => f.id === g).long : g}</div>`; }
-    const sub = t.alias || t.intervals.join(' ');
-    const name = state.kind === 'escala' ? t.name : `${t.name} <span class="sym">${esc(t.sym || 'M')}</span>`;
-    html += `<button data-t="${t.id}" class="${t.id === state.type ? 'on' : ''}" style="--c:${prefs.tonic === 'color' ? t.color : '#1E1E1E'}"><span class="dot"></span><span><b>${name}</b><small>${esc(sub)}</small></span></button>`;
+    const name = state.kind === 'escala' ? t.name : `${esc(opts.rn)}${esc(t.sym)} <small class="sym">${esc(t.name)}</small>`;
+    html += `<button data-t="${t.id}" class="${t.id === state.type ? 'on' : ''}" aria-current="${t.id === state.type}" title="${esc(t.intervals.join(' '))}" style="--c:${prefs.tonic === 'color' ? t.color : '#1E1E1E'}"><span class="dot"></span><span class="nm">${name}</span><small class="fx">${esc(t.intervals.join(' '))}</small></button>`;
   });
   $('types').innerHTML = html;
 }
+// En pantallas chicas la lista de escalas y arpegios es un cajón lateral; en las grandes está siempre visible.
 let openPop = null;
-function showPop(id, btn) {
-  closePop();
-  openPop = { el: $(id), btn };
-  $(id).hidden = false;
+function showPop() {
+  openPop = { el: $('libNav'), btn: $('pickBtn') };
+  document.body.classList.add('nav-open');
   $('scrim').hidden = false;
-  btn?.setAttribute('aria-expanded', 'true');
-  $(id).querySelector('button.on, button')?.focus({ preventScroll: true });
+  $('pickBtn').setAttribute('aria-expanded', 'true');
+  $('libNav').querySelector('.ln-list button.on')?.scrollIntoView({ block: 'center' });
+  $('libNav').querySelector('.ln-list button.on, button')?.focus({ preventScroll: true });
 }
 function closePop() {
   if (!openPop) return;
-  openPop.el.hidden = true;
-  openPop.btn?.setAttribute('aria-expanded', 'false');
-  openPop.btn?.focus({ preventScroll: true });
+  document.body.classList.remove('nav-open');
+  $('pickBtn').setAttribute('aria-expanded', 'false');
   openPop = null;
   $('scrim').hidden = true;
 }
 
 // ---------- variantes ----------
 function renderVariants() {
-  const groups = state.kind === 'escala' ? FAMILIES.map((f) => [f.id, f.name]) : CHORD_GROUPS.map((g) => [g, g]);
-  const g = groupOf(cur());
-  $('famSeg').innerHTML = groups.map(([id, name]) => `<button role="tab" data-g="${esc(id)}" class="${id === g ? 'on' : ''}" aria-selected="${id === g}">${esc(name)}</button>`).join('');
   const html = types().map((t) => {
     const label = state.kind === 'escala' ? t.name : (SHORT[t.id] || t.sym);
     const on = t.id === state.type;
@@ -413,7 +413,8 @@ function toggleDl(open) {
 // ---------- montaje ----------
 export function mount() {
   mounted = true;
-  $('pickBtn').addEventListener('click', () => (openPop?.el.id === 'picker' ? closePop() : showPop('picker', $('pickBtn'))));
+  $('pickBtn').addEventListener('click', () => (openPop ? closePop() : showPop()));
+  $('navClose').addEventListener('click', closePop);
   $('scrim').addEventListener('click', closePop);
   $('kindSeg').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b || b.dataset.kind === state.kind) return;
@@ -430,17 +431,9 @@ export function mount() {
     $('roots').querySelector(`[data-r="${state.root}"]`)?.focus({ preventScroll: true });
   });
   $('types').addEventListener('click', (e) => {
-    const b = e.target.closest('button'); if (!b) return;
-    stopPlay();
-    state.type = b.dataset.t;
-    render();
+    if (!e.target.closest('button[data-t]')) return;
+    pickVariant(e);
     closePop();
-  });
-  $('famSeg').addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-g]'); if (!b) return;
-    const first = all().find((t) => groupOf(t) === b.dataset.g);
-    if (!first || groupOf(cur()) === b.dataset.g) return;
-    pickVariant({ target: { closest: () => ({ dataset: { t: first.id } }) } });
   });
   $('variants').addEventListener('click', pickVariant);
   $('fVariants').addEventListener('click', pickVariant);

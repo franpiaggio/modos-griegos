@@ -76,3 +76,54 @@ body:not([data-sec="info"]) .only-info { display: none; }
   /* en el celular la barra de Información se desplaza con la página: deja más lugar al diagrama */
   #v-info .bar { position: static; }
 }
+
+/* ---------- Información: lista lateral + título + tónica ---------- */
+.lib { display: grid; grid-template-columns: 292px minmax(0, 1fr); align-items: start; }
+.lib-nav { position: sticky; top: var(--top-h); height: calc(100vh - var(--top-h)); overflow-y: auto; padding: 16px 12px 40px; background: #fff; border-right: 1px solid var(--line); scrollbar-width: thin; }
+.ln-head { display: none; align-items: center; justify-content: space-between; margin: 0 2px 10px; }
+.ln-head b { font: 700 18px/1 Oswald, sans-serif; text-transform: uppercase; letter-spacing: .02em; }
+.lib-nav .seg { margin-bottom: 6px; }
+.ln-list .grp { margin: 16px 8px 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: #9a9aa3; }
+.ln-list button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 10px; border: 0; border-radius: 9px; background: none; cursor: pointer; text-align: left;
+  color: #3a3a42; transition: background .2s var(--ease, ease), color .2s; }
+.ln-list button:hover { background: var(--soft); color: var(--ink); }
+.ln-list button .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); opacity: .25; flex: none; transition: opacity .2s, transform .3s; }
+.ln-list button .nm { flex: 1; min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ln-list button .nm .sym { font-size: 11.5px; color: #9a9aa3; font-weight: 400; margin-left: 4px; }
+.ln-list button .fx { color: #a6a6ae; font-size: 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ln-list button.on { background: var(--ink); color: #fff; }
+.ln-list button.on .dot { opacity: 1; background: #fff; transform: scale(1.1); }
+.ln-list button.on .fx, .ln-list button.on .sym { color: rgba(255,255,255,.6); }
+
+#v-info .bar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px 14px; padding: 14px 20px 10px; }
+.nav-btn { display: none; width: 40px; height: 40px; place-items: center; border: 1px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer; }
+.nav-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.lib-title { grid-column: 1 / 3; min-width: 0; }
+.lib-title small { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: #9a9aa3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-title h1 { margin: 2px 0 0; font: 700 26px/1.1 Oswald, sans-serif; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#v-info .bar .tools { margin: 0; }
+.roots-row { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rr-lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: #9a9aa3; flex: none; }
+#v-info .roots-row .roots { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+#v-info .roots-row .roots::-webkit-scrollbar { display: none; }
+#v-info .roots-row .roots button { flex: none; height: 32px; padding: 0 11px; border-radius: 999px; font-size: 13px; }
+#v-info .bar .variants { grid-column: 1 / -1; display: none; }
+.lib-main .stage { padding-top: 18px; }
+
+@media (max-width: 999px) {
+  .lib { display: block; }
+  .lib-nav { position: fixed; z-index: 55; top: 0; left: 0; bottom: 0; height: auto; width: min(320px, 86vw); padding-top: max(16px, env(safe-area-inset-top));
+    transform: translateX(-102%); transition: transform .38s var(--ease, cubic-bezier(.2,.8,.2,1)); box-shadow: 0 0 40px rgba(0,0,0,.18); }
+  .nav-open .lib-nav { transform: none; }
+  .ln-head { display: flex; }
+  .nav-btn { display: grid; }
+  .lib-title { grid-column: 2; }
+  #v-info .bar .variants { display: flex; }
+}
+@media (max-width: 760px) {
+  #v-info .bar { grid-template-columns: auto minmax(0, 1fr) auto; padding: 10px 10px 8px; gap: 8px 10px; }
+  .lib-title h1 { font-size: 21px; }
+  #v-info .bar .tools .zoom { display: none; }
+  .rr-lbl { display: none; }
+}
+@media print { .lib-nav { display: none !important; } .lib { display: block; } }

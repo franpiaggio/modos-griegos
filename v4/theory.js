@@ -35,7 +35,9 @@ export const PREF = [note(0), note(1, -1), note(1), note(2, -1), note(2), note(3
 export function spellingsOf(pc) {
   const out = [];
   for (let l = 0; l < 7; l++) for (const a of [0, 1, -1]) if (notePc(note(l, a)) === pc) out.push(note(l, a));
-  return out.sort((x, y) => Math.abs(x.a) - Math.abs(y.a) || y.a - x.a);
+  out.sort((x, y) => Math.abs(x.a) - Math.abs(y.a) || y.a - x.a);
+  // tecla blanca: solo el nombre natural (no Si#, Fab, Mi#, Dob)
+  return out[0].a === 0 ? [out[0]] : out;
 }
 
 // ---------------------------------------------------------------- intervalos

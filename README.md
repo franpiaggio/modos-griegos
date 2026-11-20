@@ -43,3 +43,13 @@ App web estática (sin build) con la estética de la v2:
 - La URL guarda la selección (`?k=escala&r=2&t=dorico#p3`), así se puede compartir.
 
 Archivos: `v3/theory.js` (teoría y digitaciones), `v3/render.js` (dibujo), `v3/audio.js` (sonido), `v3/app.js` (interfaz).
+
+## Versión 4 (`v4/`): teoría y práctica completas
+
+https://franpiaggio.github.io/modos-griegos/v4/
+
+- **Información**: lista lateral con escalas (modos griegos, pentatónicas y blues, menor armónica y melódica con sus modos) y arpegios (tríadas, 7ma, extensiones) en todas las tónicas, con la estética del libro, ficha (fórmula, notas, acordes de la escala, uso), sonido, vista ampliada y exportación.
+- **Teoría**: cada tema tiene **Teoría** (explicación con tablas y ejemplos para escuchar) y **Práctica** (sesiones con corrección): intervalos, escalas, acordes, grados y detección de escalas, oído funcional, acordes por función y extensiones, extensiones de arpegios, dominantes secundarios, sustitución tritonal, intercambio modal e improvisación (explorador chord-scale).
+- **Técnica**: metrónomo completo, práctica sobre un acorde fijo (escalas y arpegios), 21 ejercicios por objetivo (velocidad / calidad sonora) con escalera de tempo y registro, y formación de acordes (CAGED, tríadas por grupo de cuerdas, drop 2 y drop 3).
+- Investigación de apps y fuentes teóricas: `v4/INVESTIGACION.md`.
+- Sonido: muestras de guitarra acústica de [tonejs-instruments](https://github.com/nbrosowsky/tonejs-instruments) (CC-BY 3.0, Nicholaus P. Brosowsky). Animaciones con GSAP.
