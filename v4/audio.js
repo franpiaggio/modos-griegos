@@ -45,22 +45,25 @@ function pluckBuffer(midi) {
 }
 
 // ---------------------------------------------------------------- guitarra sampleada
-// Muestras de una guitarra archtop grabada con micrófono: "Shinyguitar" de Karoryfer Samples (CC0),
-// toma de ataque fuerte y ecualizada con más brillo (corte de graves turbios, realce de agudos).
-// Una muestra cada 3 semitonos, con dos tomas distintas (round robin) para que las notas repetidas no suenen
-// idénticas; las notas intermedias se obtienen cambiando la velocidad de reproducción (±1 semitono).
-const SAMPLES = { 40: 'e2', 42: 'gb2', 45: 'a2', 48: 'c3', 51: 'eb3', 54: 'gb3', 57: 'a3', 60: 'c4', 63: 'eb4', 66: 'gb4', 69: 'a4', 72: 'c5', 75: 'eb5', 78: 'gb5' };
-const sampleBuf = new Map(); // midi -> [toma1, toma2]
+// Guitarra sampleada: una muestra grabada por cada semitono (Mi2 a Sol5), sin estirar notas.
+// Fuente: MusyngKite (CC-BY-SA 3.0), vía midi-js-soundfonts. Dos sonidos: criolla (nylon) y acústica (acero).
+const sampleBuf = new Map(); // midi -> AudioBuffer
+let instrument = 'nylon';
 let loading = null;
-let rr = 0;
+export function setInstrument(name) {
+  if (name === instrument && loading) return loading;
+  instrument = name === 'acero' ? 'acero' : 'nylon';
+  sampleBuf.clear();
+  loading = null;
+  return ctx ? preload() : null;
+}
 export function preload() {
   ensure();
-  loading ||= Promise.all(Object.entries(SAMPLES).map(async ([m, name]) => {
-    const takes = await Promise.all([1, 2].map(async (k) => {
-      const url = new URL(`./samples/guitarra/${name}_rr${k}.mp3?v=2`, import.meta.url);
-      return ctx.decodeAudioData(await (await fetch(url)).arrayBuffer());
-    }));
-    sampleBuf.set(Number(m), takes);
+  const inst = instrument;
+  loading ||= Promise.all(Array.from({ length: 40 }, (_, k) => 40 + k).map(async (m) => {
+    const url = new URL(`./samples/${inst}/${m}.mp3`, import.meta.url);
+    const buf = await ctx.decodeAudioData(await (await fetch(url)).arrayBuffer());
+    if (inst === instrument) sampleBuf.set(m, buf);
   })).catch((e) => { console.warn('Sin muestras de guitarra, uso sonido sintético', e); });
   return loading;
 }
@@ -69,9 +72,8 @@ function source(midi) {
   const src = ctx.createBufferSource();
   if (sampleBuf.size) {
     let best = null;
-    sampleBuf.forEach((_, m) => { if (best === null || Math.abs(m - midi) < Math.abs(best - midi) || (Math.abs(m - midi) === Math.abs(best - midi) && m < best)) best = m; });
-    const takes = sampleBuf.get(best);
-    src.buffer = takes[rr++ % takes.length];
+    sampleBuf.forEach((_, m) => { if (best === null || Math.abs(m - midi) < Math.abs(best - midi)) best = m; });
+    src.buffer = sampleBuf.get(best);
     src.playbackRate.value = 2 ** ((midi - best) / 12);
   } else {
     src.buffer = pluckBuffer(midi);

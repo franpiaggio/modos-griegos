@@ -7,6 +7,7 @@ import * as motion from './motion.js';
 document.querySelectorAll('.tabs [data-ico]').forEach((i) => (i.outerHTML = icon(i.dataset.ico)));
 let firstRoute = true;
 // el navegador solo permite crear el audio después de un gesto: ahí se cargan las muestras de guitarra
+import('./audio.js').then((a) => a.setInstrument(prefs.sound));
 window.addEventListener('pointerdown', () => import('./audio.js').then((a) => a.preload()), { once: true });
 window.addEventListener('keydown', () => import('./audio.js').then((a) => a.preload()), { once: true });
 
@@ -81,6 +82,7 @@ window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) { e.
 $('settings').addEventListener('click', (e) => {
   const b = e.target.closest('.seg[data-set] button'); if (!b) return;
   setPref(b.closest('.seg').dataset.set, b.dataset.v);
+  if (b.closest('.seg').dataset.set === 'sound') import('./audio.js').then((a) => { a.setInstrument(b.dataset.v); a.preload().then(() => a.playChord([40, 47, 52, 56, 59, 64])); });
   renderSettings();
 });
 renderSettings();

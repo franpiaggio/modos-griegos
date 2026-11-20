@@ -8,7 +8,7 @@ export const store = {
 };
 
 // Preferencias globales (las comparten todas las secciones)
-export const prefs = Object.assign({ tonic: 'negra', labels: 'finger', notation: 'latin', neck: 'on' }, store.get('settings', {}));
+export const prefs = Object.assign({ tonic: 'negra', labels: 'finger', notation: 'latin', neck: 'on', sound: 'nylon' }, store.get('settings', {}));
 const listeners = new Set();
 export function setPref(k, v) {
   prefs[k] = v;
