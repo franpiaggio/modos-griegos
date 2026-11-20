@@ -82,11 +82,13 @@ function source(midi) {
 function playAt(midi, when, dur) {
   const src = source(midi);
   const g = ctx.createGain();
-  g.gain.setValueAtTime(0.9, when);
-  g.gain.setTargetAtTime(0, when + dur * 1.6, 0.16);
+  // la nota sigue sonando un rato después de la siguiente (como en la guitarra) y se apaga suave
+  const hold = Math.max(dur * 3, 1.1);
+  g.gain.setValueAtTime(0.85, when);
+  g.gain.setTargetAtTime(0, when + hold, 0.35);
   src.connect(g).connect(master);
   src.start(when);
-  src.stop(when + dur * 1.6 + 0.6);
+  src.stop(when + hold + 2);
   return src;
 }
 
@@ -157,10 +159,10 @@ export function noteAt(midi, when, dur = 0.5, gain = 0.9) {
   const src = source(midi);
   const g = ctx.createGain();
   g.gain.setValueAtTime(gain, when);
-  g.gain.setTargetAtTime(0, when + dur, 0.16);
+  g.gain.setTargetAtTime(0, when + Math.max(dur, 1.1), 0.35);
   src.connect(g).connect(master);
   src.start(when);
-  src.stop(when + dur + 0.7);
+  src.stop(when + Math.max(dur, 1.1) + 2);
   return src;
 }
 
