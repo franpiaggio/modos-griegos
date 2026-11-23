@@ -2,8 +2,9 @@
 // (tríadas, 7ma, extensiones) en posiciones, con la estética del libro. Basado en la v3.
 import {
   build, SCALES, CHORDS, FAMILIES, CHORD_GROUPS, ARP_GROUPS, scalesOf, ROOT_PCS, rootLabel, noteName, PREF, midiOf,
-  diatonic, IMPRO, pentatonicsIn, superimpositions, scaleById, transpose, ivSemis, EXTRA_SCALES, MAJOR_FUNCTIONS,
+  diatonic, IMPRO, pentatonicsIn, superimpositions, scaleById, transpose, ivSemis, EXTRA_SCALES, MAJOR_FUNCTIONS, intervalBetween,
 } from './theory.js';
+import { steps, clock, stack, keyboard, roleLegend, roleOf, ROLE } from './viz.js';
 import { sheetSvg, layoutLegend, boxOf } from './render.js';
 import * as audio from './audio.js';
 import { pieceSvg, pngBlob, save, printPiece, zipAll, slug } from './export.js';
@@ -114,6 +115,7 @@ function scaleLink(id, pc, label) {
 function chordLink(id, pc, label) {
   return `<button class="lnk" data-go-k="arpegio" data-go-t="${id}" data-go-r="${pc}">${esc(label)}</button>`;
 }
+const CHAR_COLOR = '#CE3468'; // nota característica en el reloj
 function renderInfo() {
   const card = $('infoCard');
   card.hidden = !state.info;
@@ -122,13 +124,27 @@ function renderInfo() {
   if (!state.info) return;
   const m = data.meta;
   const n = prefs.notation;
-  const notes = m.intervals.map((iv) => noteName(transpose(data.root, iv), n));
+  const spelled = m.intervals.map((iv) => transpose(data.root, iv));
+  const notes = spelled.map((x) => noteName(x, n));
   const rows = [];
-  rows.push(`<div class="ic-row"><span>Fórmula</span><div>${m.intervals.map((iv) => chip(iv)).join('')}</div></div>`);
-  rows.push(`<div class="ic-row"><span>Notas</span><div>${notes.map((x, i) => chip(x, i === 0 ? 'root' : '')).join('')}</div></div>`);
   if (state.kind === 'escala') {
     const fam = FAMILIES.find((f) => f.id === m.fam);
-    if (m.char) rows.push(`<div class="ic-row"><span>Nota característica</span><div>${esc(m.char)}</div></div>`);
+    // nota característica: los intervalos de la fórmula que aparecen en su descripción ("#4", "b6 y 7")
+    const charIvs = new Set((String(m.char || '').match(/(bb|b|#)?\d+/g) || []).filter((iv) => m.intervals.includes(iv)));
+    const markOf = new Map(data.marks.map((mk) => [mk.pc, mk]));
+    const pcOfIv = (iv) => (state.root + ivSemis(iv)) % 12;
+    // si la característica ya está marcada con su color (blue note, nota mixolidia, alteración), no se repite
+    [...charIvs].forEach((iv) => markOf.has(pcOfIv(iv)) && charIvs.delete(iv));
+    const markIdx = new Set(m.intervals.map((iv, i) => (charIvs.has(iv) || markOf.has(pcOfIv(iv)) ? i : -1)).filter((i) => i > 0));
+    const items = m.intervals.map((iv, i) => {
+      const mk = markOf.get(pcOfIv(iv));
+      return { k: ivSemis(iv), name: notes[i], iv, color: i === 0 ? ROLE[1] : mk ? mk.color : charIvs.has(iv) ? CHAR_COLOR : '#8a8a93' };
+    });
+    rows.push(`<div class="viz-row">
+      <figure class="wide">${steps([...notes, notes[0]], m.intervals, { label: `Tonos y semitonos de ${opts.display}`, mark: markIdx })}<figcaption>Fórmula y distancias${charIvs.size ? ` · <span class="ic-char"><i></i>característica: <b>${esc([...charIvs].join(', '))}</b></span>` : ''}</figcaption></figure>
+      <figure class="sm">${clock(items, { label: `Reloj cromático de ${opts.display}`, size: 200 })}<figcaption>Las 12 notas, con la tónica arriba</figcaption></figure>
+    </div>`);
+    if (data.marks.length) rows.push(`<p class="viz-legend">${data.marks.map((mk) => `<span><i style="background:${mk.color}"></i>${esc(mk.text)}${mk.root ? ' ' : ' · '}${noteName(data.spelled.get(mk.pc) || PREF[mk.pc], n)}</span>`).join('')}</p>`);
     if (m.intervals.length === 7) {
       const ds = diatonic(m.intervals, true);
       rows.push(`<div class="ic-row"><span>Acordes de la escala</span><div class="ds">${ds.map((d) => {
@@ -140,32 +156,37 @@ function renderInfo() {
     const over = Object.entries(IMPRO).filter(([, v]) => v.scales.includes(m.id)).map(([k]) => k);
     const fn = MAJOR_FUNCTIONS.find((f) => f.scale === m.id);
     const uses = [];
-    if (fn) uses.push(`${fn.roman} en tonalidad mayor (${fn.fn.toLowerCase()})`);
-    if (over.length) uses.push('Acordes ' + over.map((k) => noteName(data.root, n) + (CHORDS.find((c) => c.id === k)?.sym ?? '')).join(', '));
-    if (uses.length) rows.push(`<div class="ic-row"><span>Se usa sobre</span><div>${esc(uses.join(' · '))}</div></div>`);
+    if (fn) uses.push(chip(`${fn.roman} · ${fn.fn.toLowerCase()}`));
+    over.forEach((k) => uses.push(chip(noteName(data.root, n) + (CHORDS.find((c) => c.id === k)?.sym ?? ''))));
+    if (uses.length) rows.push(`<div class="ic-row"><span>Se usa sobre</span><div>${uses.join('')}</div></div>`);
     if (m.intervals.length === 7) {
       const pents = pentatonicsIn(state.root, m.intervals);
-      if (pents.length) rows.push(`<div class="ic-row"><span>Pentatónicas que contiene</span><div>${pents.map((p) => scaleLink('penta-mayor', p.majorPc, noteName(PREF[p.majorPc], n) + ' mayor') + ' / ' + scaleLink('penta-menor', p.minorPc, noteName(PREF[p.minorPc], n) + ' menor')).join(' · ')}</div></div>`);
+      if (pents.length) rows.push(`<div class="ic-row"><span>Pentatónicas adentro</span><div class="ds">${pents.map((p) => `<span class="dch">${scaleLink('penta-mayor', p.majorPc, noteName(PREF[p.majorPc], n) + ' mayor')}<small>= ${scaleLink('penta-menor', p.minorPc, noteName(PREF[p.minorPc], n) + ' menor')}</small></span>`).join('')}</div></div>`);
     }
-    if (data.marks.length) rows.push(`<div class="ic-row"><span>Colores en la hoja</span><div>${data.marks.map((mk) => `<span class="ic-mark"><i style="background:${mk.color}"></i>${esc(mk.text)} ${mk.root ? '' : '· '}${noteName(data.spelled.get(mk.pc) || PREF[mk.pc], n)}</span>`).join(' ')}</div></div>`);
-    rows.push(`<p class="ic-note">${esc(fam.info)}${m.fam === 'armonica' || m.fam === 'melodica' ? ' Las figuras salen de las 7 posiciones de la escala mayor relativa, alterando las notas que cambian (por eso los modos comparten figuras).' : ''}</p>`);
+    rows.push(`<p class="ic-note">${esc(fam.info)}</p>`);
   } else {
+    const gaps = spelled.slice(1).map((x, i) => intervalBetween(spelled[i], x).id);
+    const kb = m.intervals.map((iv, i) => ({ i: state.root + ivSemis(iv) + (ivSemis(iv) < 0 ? 12 : 0), label: notes[i], sub: iv, color: ROLE[roleOf(iv)] }));
+    rows.push(`<div class="viz-row">
+      <figure class="sm">${stack(m.intervals.map((iv, i) => ({ name: notes[i], iv })), gaps, { label: `${opts.display} apilado por terceras` })}<figcaption>Apilado por terceras</figcaption></figure>
+      <figure>${keyboard(kb, { label: `Notas de ${opts.display} en el teclado` })}<figcaption>En el teclado</figcaption></figure>
+    </div>${roleLegend([...new Set(m.intervals.map(roleOf))])}`);
     const tones = new Set(m.intervals.map((iv) => (state.root + ivSemis(iv)) % 12));
     const containing = SCALES.filter((s) => {
       const set = new Set(s.intervals.map((iv) => (state.root + ivSemis(iv)) % 12));
       return [...tones].every((t) => set.has(t));
     });
-    if (containing.length) rows.push(`<div class="ic-row"><span>Escalas (misma tónica) que lo contienen</span><div>${containing.map((s) => scaleLink(s.id, state.root, s.name)).join(' · ')}</div></div>`);
+    if (containing.length) rows.push(`<div class="ic-row"><span>Escalas que lo contienen</span><div class="ds">${containing.map((s) => `<span class="dch">${scaleLink(s.id, state.root, s.name)}</span>`).join('')}</div></div>`);
     const main = IMPRO[m.id]?.scales.map(scaleById).find((s) => s && s.intervals.length === 7);
     if (main) {
       const sup = superimpositions(state.root, main.intervals).filter((s) => s.deg !== 0 && s.chord);
-      rows.push(`<div class="ic-row"><span>Arpegios superpuestos (sobre ${esc(main.name)})</span><div class="ds">${sup.map((s) => {
+      rows.push(`<div class="ic-row"><span>Arpegios superpuestos</span><div class="ds">${sup.map((s) => {
         const r = transpose(data.root, s.rootIv);
         const pc = (state.root + ivSemis(s.rootIv)) % 12;
         return `<span class="dch">${chordLink(s.chord.id, pc, noteName(r, n) + s.chord.sym)}<small>${s.tones.join('-')}</small></span>`;
       }).join('')}</div></div>`);
     }
-    rows.push('<p class="ic-note">Notas del acorde dentro de las 7 zonas de la escala mayor de su fundamental. Digitación sugerida: un dedo por traste.</p>');
+    rows.push('<p class="ic-note">Posiciones con la tónica en el dedo 1, un dedo por traste.</p>');
   }
   card.innerHTML = `<div class="ic-head"><b>${esc(opts.display)}</b>${m.alias ? `<small>${esc(m.alias)}</small>` : ''}</div>${rows.join('')}`;
 }

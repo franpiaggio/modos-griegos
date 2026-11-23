@@ -9,6 +9,8 @@ import {
   recordChallenge, tries, PASS, isFree,
 } from './logros.js';
 import * as motion from './motion.js';
+import { note, noteName, transpose, spellAll, scaleById, chordById, ivSemis, intervalBetween } from './theory.js';
+import { steps, clock, stack, ruler, fifths, roleLegend, roleOf, ROLE, FN_COLOR } from './viz.js';
 
 let root = null;
 let session = null;
@@ -64,7 +66,7 @@ function logrosHtml() {
 function renderHome() {
   const next = nextChapter();
   root.innerHTML = `<div class="t-wrap cap-wrap">
-    <header class="t-intro"><h1>Capítulos</h1><p>Tu recorrido de estudio, en orden. Cada capítulo junta la explicación, las escalas o arpegios para mirar en el mástil y un desafío: con ${PASS}% o más se completa y se abre el siguiente. Información, Teoría y Técnica quedan siempre libres.</p></header>
+    <header class="t-intro"><h1>Capítulos</h1><p>Tu recorrido en orden: estudiá cada capítulo y superá su desafío para abrir el siguiente.</p></header>
     ${progressHtml()}
     ${next ? `<a class="cap-next" href="#/capitulos/${next.id}"><span class="cn-n">${next.n}</span><span class="cn-t"><small>${doneCount() ? 'Seguí con' : 'Empezá por'}</small><b>${next.title}</b></span>${ICON.next}</a>` : '<p class="cap-all">Completaste todos los capítulos.</p>'}
     <ol class="cap-path">${CHAPTERS.map((c) => {
@@ -77,6 +79,78 @@ function renderHome() {
     }).join('')}</ol>
     ${logrosHtml()}
   </div>`;
+}
+
+
+// ---------------------------------------------------------------- gráfico de cada capítulo
+const nn = (n) => noteName(n, prefs.notation);
+const C = note(0), A = note(5);
+const fig = (svg, cap, cls = '') => `<figure class="${cls}">${svg}<figcaption>${cap}</figcaption></figure>`;
+function scaleSteps(root, id, mark = [], label = '') {
+  const sc = scaleById(id);
+  const names = spellAll(root, sc.intervals).map(nn);
+  return steps([...names, names[0]], sc.intervals, { label: label || `${nn(root)} ${sc.name}`, mark: new Set(mark) });
+}
+function chordStack(root, id) {
+  const ch = chordById(id);
+  const ns = spellAll(root, ch.intervals);
+  return stack(ch.intervals.map((iv, i) => ({ name: nn(ns[i]), iv })), ns.slice(1).map((x, i) => intervalBetween(ns[i], x).id), { label: `${nn(root)}${ch.sym} por terceras` });
+}
+// clock de una escala con colores por rol respecto del acorde (tensiones en violeta)
+function roleClock(root, ivs, chordIvs, label) {
+  const ns = spellAll(root, ivs).map(nn);
+  const inChord = new Set(chordIvs.map(ivSemis));
+  return clock(ivs.map((iv, i) => ({ k: ivSemis(iv), name: ns[i], iv, color: inChord.has(ivSemis(iv)) ? ROLE[roleOf(iv)] : ROLE.t })), { label, size: 210 });
+}
+const KEYS = [[0, 0], [4, 0], [1, 0], [5, 0], [2, 0], [6, 0], [3, 1], [1, -1], [5, -1], [2, -1], [6, -1], [3, 0]].map(([l, a]) => note(l, a));
+function circle(opts) {
+  const names = KEYS.map(nn);
+  const minors = KEYS.map((k) => nn(transpose(k, '6')) + 'm');
+  return fifths(names, minors, opts);
+}
+function heroHtml(c) {
+  const G = note(4), D = note(1);
+  switch (c.id) {
+    case 'intervalos': {
+      const ls = [note(6), C, D, note(2), note(3, 1)];
+      return fig(ruler(ls.map(nn), 7, { label: 'De Si a Fa#: quinta justa', name: 'quinta justa' }), `${nn(ls[0])} → ${nn(ls[4])}: <b>5 notas</b> (distancia) y <b>7 semitonos</b> (género)`, 'wide');
+    }
+    case 'escalas':
+      return fig(scaleSteps(C, 'jonico'), `${nn(C)} mayor: T T st T T T st`, 'wide') + fig(scaleSteps(A, 'eolico'), `${nn(A)} menor: T st T T st T T`, 'wide');
+    case 'modos': {
+      const dor = scaleById('dorico');
+      const ns = spellAll(D, dor.intervals).map(nn);
+      return fig(clock(dor.intervals.map((iv, i) => ({ k: ivSemis(iv), name: ns[i], iv, color: i === 0 ? ROLE[1] : iv === '6' ? ROLE[3] : '#8a8a93' })), { label: `${nn(D)} dórico`, size: 210 }), `${nn(D)} dórico: las notas de ${nn(C)} mayor desde ${nn(D)}. Lo distingue el <b>6</b>`, 'sm');
+    }
+    case 'pentatonicas':
+      return fig(scaleSteps(A, 'penta-menor'), `${nn(A)} pentatónica menor: sin semitonos`, 'wide') + fig(scaleSteps(A, 'blues', [3]), `Escala de blues: suma la <b>b5</b> (blue note)`, 'wide');
+    case 'triadas':
+      return fig(chordStack(C, 'mayor'), `${nn(C)}: 3M + 3m`, 'sm') + fig(chordStack(C, 'menor'), `${nn(C)}m: 3m + 3M`, 'sm');
+    case 'septimas':
+      return fig(chordStack(C, 'maj7'), `${nn(C)}maj7: tríada mayor + 7`, 'sm') + fig(chordStack(G, '7'), `${nn(G)}7: tríada mayor + b7`, 'sm');
+    case 'armonica':
+      return fig(scaleSteps(A, 'menor-armonica', [6]), `${nn(A)} menor armónica: la <b>7</b> sube un semitono (T+st entre b6 y 7)`, 'wide');
+    case 'melodica':
+      return fig(scaleSteps(A, 'menor-melodica', [2]), `${nn(A)} menor melódica: una escala mayor con la <b>b3</b>`, 'wide');
+    case 'funciones':
+      return fig(circle({ label: 'Funciones en Do mayor', marks: [{ pos: 0, color: FN_COLOR.Tónica }, { pos: 11, color: FN_COLOR.Subdominante }, { pos: 1, color: FN_COLOR.Dominante }, { pos: 0, ring: 'in', color: FN_COLOR.Tónica }, { pos: 11, ring: 'in', color: FN_COLOR.Subdominante }, { pos: 1, ring: 'in', color: FN_COLOR.Tónica }] }), `<span class="fn-key">${Object.entries(FN_COLOR).map(([k, col]) => `<span><i style="background:${col}"></i>${k}</span>`).join('')}</span>`, 'sm');
+    case 'secundarios':
+      return fig(circle({ label: 'Cadena de dominantes hacia Do', marks: [{ pos: 0, color: ROLE[1] }, { pos: 1, color: FN_COLOR.Dominante }, { pos: 2, color: ROLE[3] }, { pos: 3, color: ROLE[3] }], arrows: [[1, 0, FN_COLOR.Dominante], [2, 1, ROLE[3]], [3, 2, ROLE[3]]] }), `Cada V7 cae una 5ta: ${nn(note(5))}7 → ${nn(D)}7 → ${nn(G)}7 → ${nn(C)}`, 'sm');
+    case 'intercambio':
+      return fig(scaleSteps(C, 'jonico'), `${nn(C)} mayor`, 'wide') + fig(scaleSteps(C, 'eolico', [2, 5, 6]), `${nn(C)} menor presta la <b>b3, b6 y b7</b>`, 'wide');
+    case 'tritono': {
+      const ivs = ['1', '3', '5', 'b7'];
+      const ns = spellAll(G, ivs).map(nn);
+      const items = ivs.map((iv, i) => ({ k: ivSemis(iv), name: ns[i], iv, color: ROLE[roleOf(iv)] }));
+      items.push({ k: 6, name: nn(note(1, -1)), iv: 'b5', color: ROLE.t });
+      return fig(clock(items, { label: 'Sol7 y su sustituto tritonal', pairs: [[4, 10, ROLE.t], [0, 6, '#9a9aa3']], polygon: false, size: 210 }), `${nn(G)}7 y ${nn(note(1, -1))}7 comparten el tritono ${ns[1]}–${ns[3]}`, 'sm');
+    }
+    case 'impro': {
+      const mix = scaleById('mixolidio').intervals;
+      return fig(roleClock(G, mix, chordById('7').intervals, `${nn(G)} mixolidio sobre ${nn(G)}7`), `Sobre ${nn(G)}7: notas del acorde para apoyar, tensiones de color`, 'sm') + roleLegend([1, 3, 5, 7, 't']);
+    }
+    default: return '';
+  }
 }
 
 // ---------------------------------------------------------------- capítulo
@@ -93,17 +167,16 @@ function renderChapter(c) {
   root.innerHTML = `<div class="t-wrap narrow cap-wrap">
     ${head(`<small class="cap-kicker">Capítulo ${c.n} de ${CHAPTERS.length}</small>${c.title}`)}
     <p class="cap-desc">${c.desc} ${stateTag(c)}</p>
-    ${s === 'locked' ? `<p class="cap-lock">${icon('lock')}<span>Este capítulo se desbloquea al completar el <a href="#/capitulos/${prev.id}">capítulo ${prev.n}: ${prev.title}</a>. La teoría y las escalas ya se pueden estudiar.</span></p>` : ''}
-    <section class="lbox cap-sec"><h2>${icon('teoria')} 1 · Teoría</h2><p>Leé la explicación y escuchá los ejemplos.</p>
-      <div class="cap-links">${c.lessons.map((id) => `<a class="plain" href="#/teoria/${id}">${icon(id)}<span>${EXERCISES[id].title}</span></a>`).join('')}</div>
-      <p class="hint-s">Para practicar sin límite, cada tema tiene su Práctica en Teoría.</p></section>
+    ${s === 'locked' ? `<p class="cap-lock">${icon('lock')}<span>Este capítulo se desbloquea al completar el <a href="#/capitulos/${prev.id}">capítulo ${prev.n}: ${prev.title}</a>. Igual podés estudiarlo.</span></p>` : ''}
+    <div class="viz-row cap-hero">${heroHtml(c)}</div>
+    <section class="lbox cap-sec"><h2>${icon('teoria')} 1 · Teoría</h2>
+      <div class="cap-links">${c.lessons.map((id) => `<a class="plain" href="#/teoria/${id}">${icon(id)}<span>${EXERCISES[id].title}</span></a>`).join('')}</div></section>
     ${items.length ? `<section class="lbox cap-sec"><h2>${icon('info')} 2 · En el mástil</h2>
-      <p>Estudialas en Información (tocá para abrir la hoja):</p>
       <div class="cap-links">${items.map((it) => infoOk ? `<a class="plain" href="${libLink(it)}"><span>${esc(it.name)}</span></a>` : `<span class="plain is-locked" aria-disabled="true">${icon('lock')}<span>${esc(it.name)}</span></span>`).join('')}</div></section>` : ''}
-    ${c.tecnica ? `<section class="lbox cap-sec"><h2>${icon('tecnica')} ${items.length ? 3 : 2} · Con la guitarra</h2><p>Llevalo al instrumento:</p>
+    ${c.tecnica ? `<section class="lbox cap-sec"><h2>${icon('tecnica')} ${items.length ? 3 : 2} · Con la guitarra</h2>
       <div class="cap-links"><a class="plain" href="#/tecnica${c.tecnica[0] ? '/' + c.tecnica[0] : ''}">${icon(c.tecnica[0] || 'tecnica')}<span>${c.tecnica[1]}</span></a></div></section>` : ''}
     <section class="lbox cap-sec cap-chal"><h2>${icon('trofeo')} Desafío</h2>
-      <p>10 preguntas sobre este capítulo. Con <b>${PASS}%</b> o más lo completás${c.n < CHAPTERS.length ? ' y se desbloquea el siguiente' : ''}.</p>
+      <p>10 preguntas. Con <b>${PASS}%</b> lo completás${c.n < CHAPTERS.length ? ' y se abre el siguiente' : ''}.</p>
       ${t ? `<p class="hint-s">Mejor resultado: <b>${t.best}%</b> · intentos: ${t.n}</p>` : ''}
       ${s === 'locked' ? `<button class="primary" disabled>${icon('lock')}<span>Bloqueado</span></button>` : `<a class="primary" href="#/capitulos/${c.id}/desafio">${s === 'done' ? 'Repetir desafío' : 'Empezar desafío'} ${ICON.next}</a>`}
     </section>

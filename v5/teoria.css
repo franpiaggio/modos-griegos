@@ -88,8 +88,8 @@
 .fb.bad { background: var(--bad-bg); }
 .fb-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .fb-head svg { width: 20px; height: 20px; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.fb.ok .fb-head { color: var(--ok); } .fb.ok svg { stroke: var(--ok); }
-.fb.bad .fb-head > b { color: var(--bad); } .fb.bad svg { stroke: var(--bad); }
+.fb.ok .fb-head { color: var(--ok); } .fb.ok .fb-head svg { stroke: var(--ok); }
+.fb.bad .fb-head > b { color: var(--bad); } .fb.bad .fb-head svg { stroke: var(--bad); }
 .fb-head span { color: var(--ink); }
 .fb-msg { margin: 8px 0 0; font-weight: 500; }
 .fb-exp { margin: 8px 0 0; color: #3a3a42; line-height: 1.5; }
@@ -156,3 +156,33 @@
 }
 @media (max-width: 380px) { .cards { grid-template-columns: 1fr; } }
 @media (hover: none) { .opt kbd, .primary kbd { display: none; } }
+
+/* ---------- v5: lecciones con gráficos ---------- */
+.t-wrap.narrow { max-width: 760px; }
+.lesson .lbox > p:first-of-type { margin-top: 0; }
+.lesson .viz-row figcaption { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 8px; font-size: 12.5px; line-height: 1.35; }
+.lesson .viz-row figcaption .lplay { width: 26px; height: 26px; }
+.lesson .viz-row > figure.sm { flex: 0 1 170px; max-width: 200px; }
+.lesson > .viz-legend { margin: -4px 0 0; }
+.deg-strip { list-style: none; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin: 4px 0 10px; padding: 0; }
+.deg-strip li { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border-radius: 10px; background: color-mix(in srgb, var(--c) 9%, #fff); border-top: 3px solid var(--c); text-align: center; min-width: 0; }
+.deg-strip b { font: 700 15px/1 Oswald, sans-serif; color: color-mix(in srgb, var(--c) 72%, #000); }
+.deg-strip span { hyphens: auto; font-size: 12.5px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.deg-strip small { hyphens: auto; font-size: 10.5px; color: var(--muted); line-height: 1.2; overflow-wrap: anywhere; }
+.inv { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 6px; }
+.inv span { padding: 5px 10px; border-radius: 999px; background: var(--soft); font-weight: 600; font-size: 13px; }
+.lmore { margin-top: 8px; }
+.lmore summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); padding: 4px 0; }
+/* corrección: teclado con la respuesta */
+.fb-kb { max-width: 340px; margin: 8px 0 2px; }
+.fb-kb .viz { max-height: 130px; width: auto; max-width: 100%; }
+@media (max-width: 560px) {
+  .deg-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .lesson .viz-row > figure.sm { flex-basis: 140px; }
+  .lesson .viz-row { gap: 12px 10px; }
+}
+
+.fn-t { color: #1f5aa0; } .fn-s { color: #1d6b40; } .fn-d { color: #a8264f; }
+.lesson .viz-row > figure:not(.sm):not(.wide) { flex: 0 1 240px; }
+/* los textos .sr (position:absolute) dentro de tablas desplazables no deben ensanchar la página en celular */
+.ltable { position: relative; }

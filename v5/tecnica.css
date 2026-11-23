@@ -249,3 +249,9 @@
   .vi-moves li { grid-template-columns: 1fr; gap: 2px; }
 }
 .tc-vi .tc-box .tc-h2 { margin: 0 0 10px; }
+
+/* v5: gráficos de V–I */
+.vi-guide .viz-row { margin: 6px 0; }
+.vi-kbs figure { max-width: 300px; }
+.vi-guide .fn-key { display: inline-flex; gap: 4px; align-items: center; }
+.vi-guide .fn-key i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 4px; }

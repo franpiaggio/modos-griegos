@@ -70,17 +70,17 @@ export function guideTones(a, b, mode) {
     out.push({ from, to, fromIv, toIv, semis: motion(notePc(from), notePc(to)), text });
   };
   if (a.deg === 'V' && b.deg === 'I') {
-    add('3', '1', mode === 'menor' ? 'La 3ra del V es la sensible (7ma de la menor armónica): sube un semitono a la tónica.' : 'La 3ra del V es la sensible: sube un semitono a la tónica.');
-    if (seventhIv(a)) add(seventhIv(a), thirdIv(b), mode === 'menor' ? 'La 7ma del V baja a la 3ra menor del I.' : 'La 7ma del V baja un semitono a la 3ra del I.');
-    add('1', '1', 'El bajo cae una 5ta (o sube una 4ta): V → I.');
+    add('3', '1', 'Sensible: sube un semitono a la tónica.');
+    if (seventhIv(a)) add(seventhIv(a), thirdIv(b), mode === 'menor' ? 'Baja un tono a la 3ra menor.' : 'Baja un semitono a la 3ra.');
+    add('1', '1', 'Bajo: cae una 5ta.');
   } else if (a.deg === 'I' && b.deg === 'V') {
-    add('1', '3', 'La tónica baja un semitono a la sensible: aparece la tensión.');
-    if (seventhIv(b)) add(thirdIv(a), seventhIv(b), 'La 3ra del I se mueve a la 7ma del V.');
-    add('5', '1', 'La 5ta del I es nota común: es la fundamental del V.');
+    add('1', '3', 'Baja un semitono a la sensible.');
+    if (seventhIv(b)) add(thirdIv(a), seventhIv(b), 'Pasa a la 7ma del V.');
+    add('5', '1', 'Nota común.');
   } else if (a.deg === 'II' && b.deg === 'V') {
-    if (seventhIv(a)) add(seventhIv(a), '3', 'La 7ma del II baja a la 3ra del V (sensible).');
-    add(thirdIv(a), seventhIv(b) || fifthIv(b), seventhIv(b) ? 'La 3ra del II queda como 7ma del V (nota común).' : 'La 3ra del II pasa a la 5ta del V.');
-    add('1', '1', 'El bajo cae una 5ta: II → V.');
+    if (seventhIv(a)) add(seventhIv(a), '3', 'Baja a la sensible.');
+    add(thirdIv(a), seventhIv(b) || fifthIv(b), seventhIv(b) ? 'Nota común (7ma del V).' : 'Pasa a la 5ta del V.');
+    add('1', '1', 'Bajo: cae una 5ta.');
   }
   return out;
 }

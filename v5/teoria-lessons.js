@@ -1,9 +1,10 @@
 // Explicaciones ("Teoría") de cada ejercicio. Las tablas se generan con theory.js, así coinciden con lo que se practica.
 import {
   note, noteName, notePc, transpose, chordById, scaleById, SCALES, diatonic, MAJOR_FUNCTIONS, SECONDARY, BORROWED,
-  fromTonic, tritoneSub, superimpositions, IMPRO, INTERVALS, intervalLong, idToFormula, spellAll, MODE_NAMES_FROM, ivSemis, spellingsOf,
+  fromTonic, tritoneSub, superimpositions, IMPRO, INTERVALS, intervalLong, idToFormula, spellAll, MODE_NAMES_FROM, ivSemis, spellingsOf, intervalBetween,
 } from './theory.js';
 import { prefs, esc } from './ui.js';
+import * as V from './viz.js';
 
 const C = note(0);
 const nn = (n) => noteName(n, prefs.notation);
@@ -26,8 +27,6 @@ const box = (title, body, cls = '') => `<section class="lbox ${cls}"><h2>${title
 const tip = (t) => `<p class="ltip"><b>En la guitarra:</b> ${t}</p>`;
 const key = (t) => `<p class="lkey">${t}</p>`;
 
-// "Re – Mi – Fa" numerado, para contar notas
-const steps = (list) => list.map((n, i) => `${nn(n)}<sup>${i + 1}</sup>`).join(' – ');
 const tones = (semis) => (semis % 2 ? `${(semis - 1) / 2 ? (semis - 1) / 2 + ' y medio' : 'medio'}` : String(semis / 2)).replace(/^1 y medio$/, '1 y medio');
 // esquema de tonos y semitonos de una escala de 7 notas: T, st, T+st
 function scheme(intervals) {
@@ -63,11 +62,48 @@ function chromatic() {
     const set = new Map(c.intervals.map((iv) => [ivSemis(iv), iv]));
     return `<tr><th scope="row">${sym(C, id)}</th>${IV.map((_, i) => (set.has(i) ? `<td class="on"><span>${set.get(i)}</span></td>` : '<td><span class="sr">—</span></td>')).join('')}</tr>`;
   }).join('');
-  return `<div class="ltable chroma" tabindex="0" role="region" aria-label="Escala cromática y arpegios"><table><thead>${head}</thead><tbody>${rows}</tbody></table></div><p class="lsmall">Fila de arriba: nota (desde ${nn(C)}), intervalo y semitonos desde la tónica. Ejemplo: el arpegio mayor usa las casillas 0, 4 y 7 (1 – 3 – 5); el menor 7, las casillas 0, 3, 7 y 10 (1 – b3 – 5 – b7).</p>`;
+  return `<div class="ltable chroma" tabindex="0" role="region" aria-label="Escala cromática y arpegios"><table><thead>${head}</thead><tbody>${rows}</tbody></table></div><p class="lsmall">Arriba: nota, intervalo y semitonos desde ${nn(C)}.</p>`;
 }
 const PREF_NAMES = (pc) => spellingsOf(pc).map(nn).join('/');
 
 const DEG_NAMES = ['Tónica', 'Supertónica', 'Mediante', 'Subdominante', 'Dominante', 'Superdominante', 'Sensible'];
+const ROMAN7 = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+
+// ---------------------------------------------------------------- gráficos (viz.js) con nombres de la app
+const fig = (svg, cap = '', cls = '') => `<figure class="${cls}">${svg}${cap ? `<figcaption>${cap}</figcaption>` : ''}</figure>`;
+const vrow = (...figs) => `<div class="viz-row">${figs.join('')}</div>`;
+// teclado con las notas escritas (ascendentes desde la primera), coloreadas por rol si se pasan intervalos
+function kbNotes(notes, { ivs = null, color = null, label = '' } = {}) {
+  let m = asc(notes, 0);
+  if (m[0] >= 12) m = m.map((x) => x - 12);
+  const oct = Math.max(1, Math.ceil((m[m.length - 1] + 1) / 12));
+  const marks = notes.map((n, i) => ({ i: m[i], label: nn(n), sub: ivs ? ivs[i] : '', color: color ? color(i) : ivs ? V.ROLE[V.roleOf(ivs[i])] : i === 0 ? V.ROLE[1] : '#5f5f69' }));
+  return V.keyboard(marks, { octaves: oct, label: label || notes.map(nn).join(' ') });
+}
+// reloj cromático de un acorde o escala desde su tónica
+function clockOf(root, intervals, { label = '', color = null, polygon = true, pairs = [] } = {}) {
+  const items = intervals.map((iv) => ({ k: ivSemis(iv), name: nn(transpose(root, iv)), iv, color: color ? color(iv) : V.ROLE[V.roleOf(iv)] }));
+  return V.clock(items, { label: label || `${nn(root)}: ${intervals.join(' ')}`, polygon, pairs });
+}
+// barra de tonos y semitonos de una escala; mark = intervalos a resaltar
+function stepsOf(root, id, mark = []) {
+  const s = scaleById(id);
+  const notes = [...spellAll(root, s.intervals), root].map(nn);
+  const mk = new Set(s.intervals.map((iv, i) => (mark.includes(iv) ? i : -1)).filter((i) => i >= 0));
+  return V.steps(notes, s.intervals, { label: `${nn(root)} ${s.name}: ${scheme(s.intervals).join(' ')}`, mark: mk });
+}
+// acorde apilado por terceras (fundamental abajo)
+function stackOf(root, intervals, label = '') {
+  const notes = intervals.map((iv) => transpose(root, iv));
+  const gaps = notes.slice(1).map((n, i) => intervalBetween(notes[i], n).id);
+  return V.stack(notes.map((n, i) => ({ name: nn(n), iv: intervals[i] })), gaps, { label: label || notes.map(nn).join(' ') });
+}
+// círculo de quintas en Do: mayores por fuera, relativas menores por dentro
+const FIFTHS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'Db', 'Ab', 'Eb', 'Bb', 'F'].map((s) => note('CDEFGAB'.indexOf(s[0]), s[1] === '#' ? 1 : s[1] === 'b' ? -1 : 0));
+const posOf = (n) => (notePc(n) * 7) % 12;
+const fifthsSvg = (opts) => V.fifths(FIFTHS.map(nn), FIFTHS.map((n) => nn(transpose(n, '6')) + 'm'), opts);
+// tira de grados (I a VII) con color de función o de tendencia
+const degStrip = (items) => `<ol class="deg-strip">${items.map((d) => `<li style="--c:${d.color || '#1E1E1E'}"><b>${d.top}</b><span>${d.mid}</span>${d.bot ? `<small>${d.bot}</small>` : ''}</li>`).join('')}</ol>`;
 
 const L = {
   intervalos: () => {
@@ -75,62 +111,64 @@ const L = {
       const n = transpose(C, idToFormula(i.id));
       return [`<b>${i.id}</b>`, intervalLong(i.id), i.semis, tones(i.semis), `${nn(C)} – ${nn(n)}`, play([60, 60 + i.semis], 'seq', i.id)];
     });
-    const D = note(1), F = note(3), A = note(5), B = note(6), E = note(2);
+    const D = note(1), F = note(3), B = note(6), E = note(2), Fs = note(3, 1), Eb = note(2, -1);
     return [
-      key('El <b>intervalo</b> es la distancia entre dos sonidos o notas. Los intervalos se miden por la <b>distancia</b> en cantidad de notas que separan los sonidos que quiero medir, y se clasifican por su <b>género</b>: la cantidad de tonos o semitonos entre los sonidos a medir.'),
-      box('1 · Distancia', `<p>Parto de una nota, por ejemplo ${nn(D)}, y necesito llegar a ${nn(F)}. De ${nn(D)} a ${nn(F)} tengo las notas ${steps([D, E, F])}: hay <b>3 notas</b>, por lo tanto ese intervalo se llama <b>tercera</b>.</p>
-        <p><b>Nota:</b> las alteraciones (# o b) no interfieren en el nombre del intervalo. Si tengo que medir ${nn(B)} y ${nn(note(3, 1))}, cuento ${steps([B, C, D, E, note(3, 1)])}: al tener <b>5 notas</b> el intervalo se llama <b>quinta</b>, y no importa el # en ${nn(F)}. Sin el #, el resultado sería el mismo.</p>
-        ${play([59, 66], 'seq', `${nn(B)} – ${nn(note(3, 1))}`)}`),
-      box('2 · Género del intervalo', `<p>La cantidad de tonos y semitonos entre los sonidos da la <b>característica sonora</b> del intervalo.</p>
-        <p>De ${nn(C)} a ${nn(E)} tengo una tercera de <b>2 tonos</b>: esa tercera se llama <b>tercera mayor</b>. ${play([60, 64], 'seq', 'tercera mayor')}</p>
-        <p>De ${nn(C)} a ${nn(note(2, -1))} también hay una tercera, pero la distancia es de <b>un tono y medio</b>: es una <b>tercera menor</b>. ${play([60, 63], 'seq', 'tercera menor')}</p>`),
-      box('Tipos de intervalos', `<p>Los intervalos de <b>1, 4, 5 y 8</b> son <b>justos</b> (J). Los de <b>2, 3, 6 y 7</b> son <b>mayores</b> (M) o <b>menores</b> (m). Un semitono más que el justo o el mayor es <b>aumentado</b> (A); uno menos que el justo o el menor es <b>disminuido</b> (d).</p>
+      key('El <b>intervalo</b> es la distancia entre dos sonidos o notas. Se mide por la <b>distancia</b> (cantidad de notas) y se clasifica por su <b>género</b> (cantidad de tonos y semitonos).'),
+      box('1 · Distancia', `<p>Se cuentan las notas, incluidas las dos puntas. De ${nn(D)} a ${nn(F)} hay 3 notas: es una <b>tercera</b>.</p>
+        ${vrow(fig(V.ruler([D, E, F].map(nn), 3, { label: `${nn(D)} a ${nn(F)}: 3 notas, tercera`, name: 'tercera' }), `${nn(D)} – ${nn(F)} ${play([62, 65], 'seq', `${nn(D)} ${nn(F)}`)}`, 'wide'))}
+        <p>Las alteraciones <b>no cambian el nombre</b>: de ${nn(B)} a ${nn(Fs)} hay 5 notas, es una <b>quinta</b> (con o sin el #).</p>
+        ${vrow(fig(V.ruler([B, C, D, E, Fs].map(nn), 7, { label: `${nn(B)} a ${nn(Fs)}: 5 notas, quinta`, name: 'quinta' }), `${nn(B)} – ${nn(Fs)} ${play([59, 66], 'seq', `${nn(B)} ${nn(Fs)}`)}`, 'wide'))}`),
+      box('2 · Género del intervalo', `<p>Los tonos y semitonos dan el <b>color</b>. Misma tercera, distinto género:</p>
+        ${vrow(fig(kbNotes([C, E], { ivs: ['1', '3'] }), `<b>${nn(C)} – ${nn(E)}</b>: 2 tonos = tercera mayor ${play([60, 64], 'seq', 'tercera mayor')}`),
+          fig(kbNotes([C, Eb], { ivs: ['1', 'b3'] }), `<b>${nn(C)} – ${nn(Eb)}</b>: 1 tono y medio = tercera menor ${play([60, 63], 'seq', 'tercera menor')}`))}`),
+      box('Tipos de intervalos', `<p><b>1, 4, 5, 8</b>: justos (J). <b>2, 3, 6, 7</b>: mayores (M) o menores (m). Un semitono más: aumentado (A); uno menos: disminuido (d).</p>
         ${table(['Intervalo', 'Nombre', 'Semitonos', 'Tonos', `Desde ${nn(C)}`, ''], rows)}`),
-      box('Enarmonía: suena igual, se escribe distinto', `<p>${nn(note(1))}–${nn(note(3, 1))} (3M) y ${nn(note(1))}–${nn(note(4, -1))} (4d) suenan igual (4 semitonos) pero son intervalos distintos, porque usan letras distintas. Por eso en los ejercicios la respuesta tiene que tener la <b>letra correcta</b>.</p>`),
-      box('Inversión', `<p>Si la nota de abajo pasa arriba, el número se completa a 9 (3ra ↔ 6ta, 2da ↔ 7ma, 4ta ↔ 5ta) y la calidad se da vuelta: M ↔ m, A ↔ d, J sigue J. Ejemplo: ${nn(C)}–${nn(note(2))} es 3M; ${nn(note(2))}–${nn(C)} es 6m.</p>`),
-      tip('en una misma cuerda cada traste es un semitono: una 3M son 4 trastes, una 5J son 7. Entre dos cuerdas vecinas hay una 4J (salvo Sol–Si, que es 3M).'),
+      box('Enarmonía', `<p>${nn(D)}–${nn(Fs)} (3M) y ${nn(D)}–${nn(note(4, -1))} (4d) <b>suenan igual</b> pero se escriben distinto: la <b>letra</b> define el intervalo.</p>`),
+      box('Inversión', `<div class="inv"><span>2 ↔ 7</span><span>3 ↔ 6</span><span>4 ↔ 5</span><span>M ↔ m</span><span>A ↔ d</span><span>J = J</span></div><p class="lsmall">Suman 9. Ej.: ${nn(C)}–${nn(E)} es 3M; ${nn(E)}–${nn(C)} es 6m.</p>`),
+      tip('en una cuerda, cada traste es un semitono (3M = 4 trastes, 5J = 7). Entre cuerdas vecinas hay una 4J, salvo Sol–Si (3M).'),
     ].join('');
   },
 
   escalas: () => {
-    const MAIN = [['jonico', 'Escala mayor', C], ['eolico', 'Escala menor', note(5)], ['menor-armonica', 'Menor armónica', note(5)], ['menor-melodica', 'Menor melódica', note(5)]];
-    const rows = MAIN.map(([id, name, root]) => {
-      const s = scaleById(id);
-      const notes = spellAll(root, s.intervals);
-      return [`<b>${name}</b>`, `<span class="scheme">${scheme(s.intervals).join(' ')}</span>`, s.intervals.join(' '), notes.map(nn).join(' '), play(asc([...notes, root]), 'seq', name)];
-    });
+    const A = note(5), G = note(4);
+    const MAIN = [['jonico', 'Escala mayor', C, []], ['eolico', 'Escala menor', A, []], ['menor-armonica', 'Menor armónica', A, ['7']], ['menor-melodica', 'Menor melódica', A, ['6', '7']]];
     const others = ['penta-mayor', 'penta-menor', 'blues', 'blues-mayor'].map(scaleById).map((s) => {
-      const root = s.offset === 9 ? note(5) : C;
+      const root = s.offset === 9 ? A : C;
       const notes = spellAll(root, s.intervals);
       return [`<b>${s.name}</b>`, s.intervals.join(' '), notes.map(nn).join(' '), play(asc([...notes, root]), 'seq', s.name)];
     });
+    const sPlay = (root, id) => play(asc([...spellAll(root, scaleById(id).intervals), root]), 'seq', scaleById(id).name);
     return [
-      key('Una <b>escala</b> es un esquema de distancias entre sonidos y se define por los intervalos entre cada nota con respecto a la nota de partida (<b>tónica</b>).'),
-      box('Escala y tonalidad no son lo mismo', `<p>Una <b>escala</b> es un esquema con identidad propia; una <b>tonalidad</b> es una variante de una escala.</p><p>Por ejemplo, la escala de ${nn(C)} mayor y la escala de ${nn(note(4))} mayor <b>no son escalas distintas</b>: son <b>tonalidades diferentes de la escala mayor</b>. Son variaciones de un mismo esquema de distancias.</p>`),
-      box('Las 4 escalas principales', `<p><b>T</b> = tono · <b>st</b> = semitono · <b>T+st</b> = tono y medio.</p>${table(['Escala', 'Esquema', 'Fórmula', 'Ejemplo', ''], rows)}`),
-      box('Armado de una escala', `<ol><li>Escribí <b>7 notas distintas y consecutivas, sin alteraciones</b>, empezando por la tónica.</li><li>Medí la distancia entre cada nota y comparala con el <b>esquema</b> de la escala que querés armar.</li><li><b>Ajustá con alteraciones</b> donde haga falta: el <b>#</b> aumenta medio tono a una nota y la <b>b</b> la disminuye medio tono.</li></ol>
+      key('Una <b>escala</b> es un esquema de distancias entre sonidos, definido por los intervalos de cada nota con respecto a la <b>tónica</b>.'),
+      box('Escala y tonalidad no son lo mismo', `<p>${nn(C)} mayor y ${nn(G)} mayor <b>no son escalas distintas</b>: son <b>tonalidades</b> de la misma escala mayor. Mismo esquema, otra tónica:</p>
+        ${vrow(fig(stepsOf(C, 'jonico'), `${nn(C)} mayor ${sPlay(C, 'jonico')}`, 'wide'), fig(stepsOf(G, 'jonico', ['7']), `${nn(G)} mayor ${sPlay(G, 'jonico')}`, 'wide'))}`),
+      box('Las 4 escalas principales', `<p><b>T</b> tono · <b>st</b> semitono · <b>T+st</b> tono y medio. En naranja, las notas que cambian respecto de la menor natural.</p>
+        ${vrow(...MAIN.map(([id, name, root, mk]) => fig(stepsOf(root, id, mk), `<b>${name}</b> · ${scheme(scaleById(id).intervals).join(' ')} ${sPlay(root, id)}`, 'wide')))}`),
+      box('Armado de una escala', `<ol><li>Escribí <b>7 notas consecutivas, sin alteraciones</b>, desde la tónica.</li><li>Medí cada distancia y comparala con el <b>esquema</b>.</li><li><b>Ajustá</b>: # sube medio tono, b baja medio tono.</li></ol>
         ${buildExample(C, 'jonico', `${nn(C)} mayor`)}
-        ${buildExample(note(5), 'eolico', `${nn(note(5))} menor`)}
-        ${buildExample(note(5), 'menor-armonica', `${nn(note(5))} menor armónica`)}
-        ${buildExample(note(4), 'jonico', `${nn(note(4))} mayor`)}`),
+        ${buildExample(A, 'eolico', `${nn(A)} menor`)}
+        ${buildExample(A, 'menor-armonica', `${nn(A)} menor armónica`)}
+        ${buildExample(G, 'jonico', `${nn(G)} mayor`)}`),
       box('Otras escalas que se practican', table(['Escala', 'Fórmula', 'Ejemplo', ''], others)),
-      tip('en Información están todas estas escalas en sus posiciones; la ficha (botón ⓘ) muestra la fórmula y las notas de cada una.'),
     ].join('');
   },
 
   acordes: () => {
-    const tri = ['mayor', 'menor', 'dim', 'aum', 'sus2', 'sus4'];
-    const sev = ['maj7', '7', 'm7', 'm7b5', 'dim7', 'mMaj7', 'maj7s5', '6', 'm6'];
-    const ext = ['add9', 'maj9', '9', 'm9', 'm11', 'maj7s11', '13', 'm7b9', '7s9'];
-    const STRUCT = { mayor: '3M + 3m', menor: '3m + 3M', dim: '3m + 3m', aum: '3M + 3M', sus2: '2M + 4J', sus4: '4J + 2M' };
+    const tri = ['mayor', 'menor', 'dim', 'aum'];
+    const sev = ['maj7', '7', 'm7', 'm7b5', 'dim7', 'mMaj7'];
+    const more = ['sus2', 'sus4', 'maj7s5', '6', 'm6'];
     const row = (id) => { const c = chordById(id); return [`<b>${sym(C, id)}</b>`, c.name, c.intervals.join(' '), spellAll(C, c.intervals).map(nn).join(' '), chordPlay(C, id)]; };
+    const st = (id) => fig(stackOf(C, chordById(id).intervals, `${sym(C, id)}: ${spellAll(C, chordById(id).intervals).map(nn).join(' ')}`), `<b>${sym(C, id)}</b> ${chordById(id).name.toLowerCase()} ${chordPlay(C, id)}`, 'sm');
     return [
-      key('Un <b>acorde</b> se forma por la superposición de notas de 3 en 3, es decir, <b>por terceras</b>. Los acordes mínimamente pueden ser <b>tríadas</b> (compuestos por 3 notas) o <b>tétradas</b> (compuestos por 4 notas). Las extensiones como 9, 11 y 13 <b>no cuentan</b> en el armado ni en las características del acorde.'),
-      box('Tríadas (3 notas)', `<p>La calidad depende de qué terceras se apilan: ${tri.slice(0, 4).map((id) => `${chordById(id).name.toLowerCase()} = ${STRUCT[id]}`).join(' · ')}. Las sus reemplazan la 3ra por la 2da o la 4ta.</p>${table(['Cifrado', 'Nombre', 'Fórmula', 'Notas', ''], tri.map(row))}`),
-      box('Tétradas (4 notas)', `<p>A la tríada se le suma otra tercera: la 7ma, mayor (7) o menor (b7). La disminuida lleva bb7 (suena como 6ta, pero se escribe como 7ma).</p>${table(['Cifrado', 'Nombre', 'Fórmula', 'Notas', ''], sev.map(row))}`),
-      box('Arpegios: esquema de la escala cromática', `<p>Un <b>arpegio</b> es el acorde tocado nota por nota. Para armarlo sobre cualquier tónica sirve el esquema de la <b>escala cromática</b>: las 12 notas separadas por semitonos, cada una con su intervalo respecto de la tónica. Cada arpegio elige 3 (tríada) o 4 (tétrada) de esas casillas.</p>${chromatic()}`),
-      box('Extensiones (no cambian el tipo de acorde)', `<p>Las tensiones son las notas de la escala una octava arriba: <b>9 = 2</b>, <b>11 = 4</b>, <b>13 = 6</b>. Se suman a la tétrada pero no cambian su tipo: ${sym(C, 'maj9')} sigue siendo un acorde mayor 7. En el 13 se omite la 11 (choca con la 3ra); el dominante con 11 se toca como 9sus4.</p>${table(['Cifrado', 'Nombre', 'Fórmula', 'Notas', ''], ext.map(row))}`),
-      tip('en Información → Arpegios están las tríadas y las tétradas en sus posiciones (con la tónica en el dedo 1), y en Técnica → Formación de acordes, sus formas (CAGED, tríadas, drop 2 y drop 3).'),
+      key('Un <b>acorde</b> se forma superponiendo notas de 3 en 3: <b>por terceras</b>. Puede ser <b>tríada</b> (3 notas) o <b>tétrada</b> (4 notas). Las extensiones 9, 11 y 13 <b>no cuentan</b> en el armado ni en el tipo de acorde.'),
+      V.roleLegend([1, 3, 5, 7, 't']),
+      box('Tríadas (3 notas)', `<p>Dos terceras apiladas; el tipo depende de cuáles (3M o 3m).</p>${vrow(...tri.map(st))}`),
+      box('Tétradas (4 notas)', `<p>A la tríada se le suma otra tercera: la 7ma.</p>${vrow(...sev.map(st))}<details class="lmore"><summary>Más acordes (sus, 6, maj7(#5))</summary>${table(['Cifrado', 'Nombre', 'Fórmula', 'Notas', ''], more.map(row))}</details>`),
+      box('Arpegios: esquema de la escala cromática', `<p>Las 12 notas, a un semitono cada una, en círculo: cada arpegio elige 3 o 4 y forma una figura.</p>
+        ${vrow(fig(clockOf(C, chordById('maj7').intervals, { label: `${sym(C, 'maj7')} en el reloj` }), `<b>${sym(C, 'maj7')}</b>: 0 · 4 · 7 · 11`, 'sm'), fig(clockOf(C, chordById('m7').intervals, { label: `${sym(C, 'm7')} en el reloj` }), `<b>${sym(C, 'm7')}</b>: 0 · 3 · 7 · 10`, 'sm'), fig(clockOf(C, chordById('dim7').intervals, { label: `${sym(C, 'dim7')} en el reloj` }), `<b>${sym(C, 'dim7')}</b>: simétrico, todo 3m`, 'sm'))}
+        ${chromatic()}`),
+      box('Extensiones (no cambian el tipo)', `<p>Siguen apilando terceras sobre la 7ma: <b>9 = 2</b>, <b>11 = 4</b>, <b>13 = 6</b>. ${sym(C, 'maj9')} sigue siendo un acorde mayor 7.</p>${vrow(fig(stackOf(C, ['1', '3', '5', 'b7', '9', '13'], `${sym(C, '13')}`), `<b>${sym(C, '13')}</b> (sin la 11, que choca con la 3ra) ${chordPlay(C, '13')}`, 'sm'))}`),
+      tip('en Información → Arpegios están las tríadas y tétradas con la tónica en el dedo 1; en Técnica → Formación de acordes, sus formas en el mástil.'),
     ].join('');
   },
 
@@ -138,41 +176,47 @@ const L = {
     const maj = spellAll(C, scaleById('jonico').intervals);
     const modes = SCALES.filter((s) => s.fam === 'mayor' || s.id === 'menor-armonica' || s.id === 'menor-melodica');
     return [
-      key('Cada nota de una escala es un <b>grado</b> (I a VII) según su distancia a la tónica. Conocer el grado de una nota es saber <b>qué función cumple</b>, no solo cómo se llama.'),
-      box('Los grados de la escala mayor', table(['Grado', 'Nombre', `En ${nn(C)} mayor`], maj.map((n, i) => [`<b>${['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][i]}</b>`, DEG_NAMES[i], nn(n)]))),
-      box('Cómo detectar una escala a partir de sus notas', `<ol><li>Ubicá la <b>tónica</b>: suele ser la primera y la última nota, o la que da sensación de reposo.</li><li>Calculá el intervalo de cada nota respecto de la tónica y armá la <b>fórmula</b>.</li><li>Comparala con las fórmulas conocidas; alcanza con mirar la <b>nota característica</b> (la que la diferencia de las parecidas).</li></ol>
+      key('Cada nota de una escala es un <b>grado</b> (I a VII). El grado dice <b>qué función cumple</b> la nota, no solo cómo se llama.'),
+      box(`Los grados de ${nn(C)} mayor`, `${degStrip(maj.map((n, i) => ({ top: ROMAN7[i], mid: nn(n), bot: DEG_NAMES[i] })))}${vrow(fig(stepsOf(C, 'jonico'), `${nn(C)} mayor ${play(asc([...maj, C]), 'seq', 'Do mayor')}`, 'wide'))}`),
+      box('Detectar una escala', `<ol><li>Ubicá la <b>tónica</b> (reposo; suele empezar y terminar).</li><li>Sacá la <b>fórmula</b>: el intervalo de cada nota.</li><li>Buscá la <b>nota característica</b>.</li></ol>
         ${table(['Escala', 'Fórmula', 'Nota característica'], modes.map((s) => [`<b>${s.name}</b>`, s.intervals.join(' '), esc(s.char || '')]))}`),
-      box('Tonalidad a partir de acordes', `<p>En una tonalidad mayor hay <b>un solo V7</b> (el único dominante diatónico). Si aparece G7 junto con acordes de la escala de Do, la tonalidad es Do mayor: el V7 resuelve a la tónica una 5ta abajo.</p>`),
+      box('Tonalidad a partir de acordes', `<p>Hay <b>un solo V7</b> por tonalidad mayor: si aparece ${nn(note(4))}7 con acordes de ${nn(C)}, la tónica es ${nn(C)} (una 5ta abajo).</p>`),
     ].join('');
   },
 
   'oido-funcional': () => {
     const cad = [[48, 52, 55, 60], [53, 57, 60, 65], [55, 59, 62, 67], [48, 52, 55, 60]];
+    const maj = spellAll(C, scaleById('jonico').intervals);
+    const T = [['Reposo', '—', '#2C6DB5'], ['Suspendido', '→ 1', '#CE3468'], ['Estable', '—', '#2C6DB5'], ['Tenso', '→ 3', '#CE3468'], ['Estable', '—', '#2C6DB5'], ['Inestable', '→ 5', '#CE3468'], ['Sensible', '→ 1', '#CE3468']];
     return [
-      key('El oído funcional reconoce cada nota <b>por su relación con la tónica</b>, no por su nombre. Primero se escucha una cadencia que fija la tonalidad; después, una nota.'),
-      box('La cadencia I – IV – V – I', `<p>Establece la tonalidad sin dudas: el V lleva la sensible que pide resolver a la tónica. Escuchala: <button class="plain sm" data-cad="1">Escuchar cadencia en ${nn(C)}</button></p>`),
-      box('Cómo suena cada grado', table(['Grado', 'Sensación', 'Tiende a'], [
-        ['<b>1</b>', 'Reposo total', '—'], ['<b>3</b>', 'Estable, define mayor o menor', '—'], ['<b>5</b>', 'Estable, abierto', '—'],
-        ['<b>2</b>', 'Suspendido', 'bajar al 1'], ['<b>4</b>', 'Tenso, "colgado"', 'bajar al 3'], ['<b>6</b>', 'Dulce, inestable', 'bajar al 5'], ['<b>7</b>', 'Muy tenso (sensible)', 'subir al 1'],
-      ])),
-      box('Método', `<ol><li>Escuchá la cadencia y cantá la tónica.</li><li>Escuchá la nota y cantá el camino hasta la tónica (por grados).</li><li>Contá cuántos pasos diste: ese es el grado. Al responder, la app toca esa resolución.</li></ol><p>Empezá con los grados 1 a 3, después 1 a 5, la escala completa y por último los cromáticos (b2, b3, #4, b6, b7).</p>`),
+      key('Reconocer cada nota <b>por su relación con la tónica</b>: primero una cadencia fija la tonalidad, después suena una nota.'),
+      box('La cadencia I – IV – V – I', `<p>Fija la tonalidad: el V lleva la sensible que pide volver a la tónica. <button class="plain sm" data-cad="1">Escuchar en ${nn(C)}</button></p>`),
+      box('Cómo suena cada grado', `${degStrip(maj.map((n, i) => ({ top: i + 1, mid: T[i][0], bot: T[i][1], color: T[i][2] })))}<p class="viz-legend"><span><i style="background:#2C6DB5"></i>Estable</span><span><i style="background:#CE3468"></i>Tiende a resolver</span></p>`),
+      box('Método', `<ol><li>Cantá la tónica después de la cadencia.</li><li>Cantá el camino de la nota a la tónica, por grados.</li><li>Contá los pasos: ese es el grado.</li></ol><p class="lsmall">Orden: grados 1–3, después 1–5, toda la escala y por último los cromáticos.</p>`),
     ].join('') + `<script type="text/x-cad">${JSON.stringify(cad)}</script>`;
   },
 
   funciones: () => {
+    const J = scaleById('jonico').intervals;
     const fnRows = MAJOR_FUNCTIONS.map((f) => {
-      const r = transpose(C, scaleById('jonico').intervals[f.deg]);
-      return [`<b>${f.roman}</b>`, sym(r, f.chord), f.fn, scaleById(f.scale).name, f.tensions.join(', '), f.avoid.join(', ') || '—'];
+      const r = transpose(C, J[f.deg]);
+      return [`<b class="fn-${f.fn[0].toLowerCase()}">${f.roman}</b>`, sym(r, f.chord), scaleById(f.scale).name, f.tensions.join(', '), f.avoid.join(', ') || '—'];
     });
     const dia = (id) => diatonic(scaleById(id).intervals).map((d) => {
       const r = transpose(note(5), d.iv);
       return `<span class="dch"><b>${nn(r)}${d.chord.sym}</b><small>${d.roman}</small></span>`;
     }).join('');
+    const strip = degStrip(MAJOR_FUNCTIONS.map((f) => ({ top: f.roman.replace(/(maj7|m7\(b5\)|m7|7)$/, ''), mid: sym(transpose(C, J[f.deg]), f.chord), bot: f.fn, color: V.FN_COLOR[f.fn] })));
+    const marks = [
+      { pos: 0, color: V.FN_COLOR.Tónica }, { pos: 0, ring: 'in', color: V.FN_COLOR.Tónica }, { pos: 1, ring: 'in', color: V.FN_COLOR.Tónica },
+      { pos: 11, color: V.FN_COLOR.Subdominante }, { pos: 11, ring: 'in', color: V.FN_COLOR.Subdominante }, { pos: 1, color: V.FN_COLOR.Dominante },
+    ];
     return [
-      key('Cada acorde de la tonalidad cumple una <b>función</b>: <b>tónica</b> (reposo), <b>subdominante</b> (alejamiento) o <b>dominante</b> (tensión que pide resolver). La función decide qué extensiones suenan bien.'),
-      box(`Acordes de ${nn(C)} mayor: función, escala y tensiones`, `${table(['Grado', 'Acorde', 'Función', 'Escala', 'Tensiones', 'A evitar'], fnRows)}<p class="lsmall">Criterio Berklee (chord-scale). Una <b>nota a evitar</b> es la que queda un semitono (b9) arriba de una nota del acorde, como la 11 sobre Imaj7 o V7. En IIm7, Berklee evita la 13 (forma tritono con la 3ra); otros autores la aceptan.</p>`),
-      box('Acorde extendido según su función', `<p>Se suman al acorde de 7ma sus tensiones disponibles: Imaj7 → Imaj9 o I6/9 · IIm7 → IIm9, IIm11 · V7 → V9, V13 · VIm7 → VIm9, VIm11.</p>`),
-      box(`Menor armónica y menor melódica (en ${nn(note(5))})`, `<p><b>Armónica:</b></p><div class="ds">${dia('menor-armonica')}</div><p><b>Melódica:</b></p><div class="ds">${dia('menor-melodica')}</div>`),
+      key('Cada acorde cumple una <b>función</b>: <b class="fn-t">tónica</b> (reposo), <b class="fn-s">subdominante</b> (alejamiento) o <b class="fn-d">dominante</b> (tensión).'),
+      box(`Funciones en ${nn(C)} mayor`, `${strip}${vrow(fig(fifthsSvg({ marks, arrows: [[1, 0, V.FN_COLOR.Dominante]], label: 'Funciones en el círculo de quintas' }), `La tónica arriba, el IV a la izquierda y el V a la derecha`,))}`),
+      box('Tensiones según la función', `${table(['Grado', 'Acorde', 'Escala', 'Tensiones', 'A evitar'], fnRows)}<p class="lsmall">Criterio Berklee. Nota a evitar: la que queda un semitono arriba de una nota del acorde (la 11 sobre Imaj7 o V7).</p>`),
+      box('Acorde extendido según su función', `<p>Imaj7 → Imaj9, I6/9 · IIm7 → IIm9, IIm11 · V7 → V9, V13 · VIm7 → VIm9.</p>`),
+      box(`Menores (en ${nn(note(5))})`, `<p><b>Armónica</b></p><div class="ds">${dia('menor-armonica')}</div><p><b>Melódica</b></p><div class="ds">${dia('menor-melodica')}</div>`),
     ].join('');
   },
 
@@ -181,40 +225,53 @@ const L = {
       const r = transpose(C, s.rootIv);
       return [`<b>${nn(r)}${s.chord.sym}</b>`, `desde la ${s.rootIv}`, s.tones.join(' – '), s.tones.includes('11') ? 'trae la 11 (a evitar)' : ''];
     });
+    const ivs = ['1', '3', '5', '7', '9', '11', '13'];
     return [
-      key('Las extensiones (9, 11, 13) son las notas de la escala que siguen apilando terceras arriba de la 7ma. Una forma práctica de tocarlas es <b>superponer otro arpegio</b>.'),
-      box('Superposición de arpegios', `<p>Un arpegio de 7ma armado desde la 3ra del acorde aporta 3 – 5 – 7 – <b>9</b>; desde la 5ta, 5 – 7 – 9 – 11; desde la 7ma, 7 – 9 – 11 – 13. Sobre ${sym(C, 'maj7')} (escala Jónico):</p>${table(['Arpegio', 'Desde', 'Aporta (sobre el acorde)', ''], rows)}`),
-      box('Arpegios extendidos', `<p>${sym(C, 'maj9')} = ${spellAll(C, chordById('maj9').intervals).map(nn).join(' ')} · ${sym(note(1), 'm9')} = ${spellAll(note(1), chordById('m9').intervals).map(nn).join(' ')} · ${sym(note(4), '13')} = ${spellAll(note(4), chordById('13').intervals).map(nn).join(' ')}.</p>`),
-      tip('en Información → Arpegios están las tétradas (con 7ma) que se superponen; la ficha de cada escala lista los arpegios superpuestos. Los arpegios extendidos se agregan más adelante.'),
+      key('Las extensiones son las notas de la escala que siguen <b>apilando terceras</b> arriba de la 7ma. Para tocarlas: <b>superponer otro arpegio</b>.'),
+      box(`Apilado completo sobre ${sym(C, 'maj7')}`, `${vrow(fig(stackOf(C, ivs, `${nn(C)} jónico apilado por terceras`), `1-3-5-7 es el acorde; 9-11-13 son tensiones. Desde la 3ra sale ${nn(note(2))}m7 (3-5-7-9).`, 'sm'))}`),
+      box('Arpegios superpuestos', table(['Arpegio', 'Desde', 'Aporta', ''], rows)),
+      tip('en Información → Arpegios están las tétradas para superponer; la ficha de cada escala lista sus arpegios superpuestos.'),
     ].join('');
   },
 
   secundarios: () => {
+    const J = scaleById('jonico').intervals;
     const rows = SECONDARY.map((s) => {
-      const tgt = transpose(C, scaleById('jonico').intervals[s.target]);
+      const tgt = transpose(C, J[s.target]);
       const dom = transpose(tgt, '5');
-      return [`<b>${s.id.replace('V/', 'V7/')}</b>`, `${nn(dom)}7`, nn(tgt) + diatonic(scaleById('jonico').intervals)[s.target].chord.sym, scaleById(s.scale).name, s.tensions.join(', '), chordPlay(dom, '7')];
+      return [`<b>${s.id.replace('V/', 'V7/')}</b>`, `${nn(dom)}7`, nn(tgt) + diatonic(J)[s.target].chord.sym, scaleById(s.scale).name, s.tensions.join(', '), chordPlay(dom, '7')];
     });
+    const targets = SECONDARY.map((s) => transpose(C, J[s.target]));
+    const arrows = targets.map((t) => [posOf(transpose(t, '5')), posOf(t), V.ROLE[3]]);
+    const marks = [{ pos: 0, color: '#1E1E1E' }, ...targets.map((t) => ({ pos: posOf(t), color: '#2C6DB5' }))];
     return [
-      key('Un dominante secundario es el <b>V7 de un acorde que no es la tónica</b>. Lo prepara como si fuera una tónica momentánea (tonicización), sin cambiar de tonalidad.'),
-      box('Cómo se arma', `<ol><li>Elegí el acorde de destino (II, III, IV, V o VI).</li><li>Subí una <b>5ta justa</b> desde su fundamental: esa es la fundamental del dominante.</li><li>Armá un acorde <b>7</b> (1 3 5 b7). Su 3ra funciona como sensible del destino.</li></ol><p>No hay V7/VII: el VII es disminuido y no puede funcionar como tónica.</p>`),
-      box(`Dominantes secundarios en ${nn(C)} mayor`, `${table(['Función', 'Acorde', 'Resuelve a', 'Escala', 'Tensiones', ''], rows)}<p class="lsmall">Las tensiones salen de las notas de la tonalidad: si el destino es menor (II, III, VI) aparecen b9 y/o b13.</p>`),
-      box('II – V relativo', `<p>Cada secundario puede estar precedido por su propio II: Mi m7 – La7 → Re m7 (II–V del II).</p>`),
+      key('Un dominante secundario es el <b>V7 de un acorde que no es la tónica</b>: lo prepara como una tónica momentánea.'),
+      box('Cómo se arma', `<ol><li>Elegí el destino (II, III, IV, V o VI).</li><li>Subí una <b>5ta justa</b>: esa es la fundamental.</li><li>Armá un <b>7</b>: su 3ra es la sensible del destino.</li></ol>
+        ${vrow(fig(fifthsSvg({ marks, arrows, label: 'Dominantes secundarios en el círculo de quintas' }), `Cada flecha: V7 → su destino, una 5ta abajo (un paso en el círculo)`,))}<p class="lsmall">No hay V7/VII: el VII es disminuido.</p>`),
+      box(`En ${nn(C)} mayor`, `${table(['Función', 'Acorde', 'Resuelve a', 'Escala', 'Tensiones', ''], rows)}<p class="lsmall">Si el destino es menor (II, III, VI) aparecen b9 y/o b13.</p>`),
+      box('II – V relativo', `<p>Cada secundario puede llevar su propio II: ${nn(note(2))}m7 – ${nn(note(5))}7 → ${nn(note(1))}m7.</p>`),
     ].join('');
   },
 
   tritono: () => {
     const G = note(4);
     const sub = tritoneSub(G);
-    const rows = [['V7', G, C], ...SECONDARY.map((s) => [s.id.replace('V/', 'V7/'), transpose(transpose(C, scaleById('jonico').intervals[s.target]), '5'), transpose(C, scaleById('jonico').intervals[s.target])])].map(([fn, dom, tgt]) => {
+    const J = scaleById('jonico').intervals;
+    const rows = [['V7', G, C], ...SECONDARY.map((s) => [s.id.replace('V/', 'V7/'), transpose(transpose(C, J[s.target]), '5'), transpose(C, J[s.target])])].map(([fn, dom, tgt]) => {
       const sv = tritoneSub(dom);
       return [`<b>${fn}</b>`, `${nn(dom)}7`, `<b>${nn(sv)}7</b>`, nn(tgt), chordPlay(sv, '7')];
     });
+    // reloj desde Sol: Sol7 (rol por color) + Reb7 (violeta); 3ra y 7ma compartidas con línea punteada
+    const g7 = ['1', '3', '5', 'b7'].map((iv) => ({ k: ivSemis(iv), name: nn(transpose(G, iv)), iv, color: V.ROLE[V.roleOf(iv)] }));
+    const db7 = ['b5', 'b2'].map((iv) => ({ k: ivSemis(iv), name: nn(transpose(G, iv)), color: V.ROLE.t }));
+    const ck = V.clock([...g7, ...db7], { pairs: [[4, 10, V.ROLE[3]]], polygon: false, label: `${sym(G, '7')} y ${sym(sub, '7')} comparten el tritono` });
     return [
-      key(`La sustitución tritonal reemplaza un V7 por <b>el dominante que está a un tritono</b> (3 tonos): ${sym(G, '7')} → ${sym(sub, '7')}.`),
-      box('Por qué funciona', `<p>Los dos acordes comparten el <b>tritono</b> formado por la 3ra y la 7ma, con los papeles cambiados: en ${sym(G, '7')}, ${nn(note(6))} (3) y ${nn(note(3))} (b7); en ${sym(sub, '7')}, ${nn(note(3))} (3) y ${nn(note(0, -1))} = ${nn(note(6))} (b7). Ese tritono es lo que pide resolver.</p><p>El subV7 resuelve <b>por semitono descendente</b>: ${sym(sub, '7')} → ${sym(C, 'maj7')}.</p>`),
+      key(`La sustitución tritonal reemplaza un V7 por el <b>dominante a un tritono</b>: ${sym(G, '7')} → ${sym(sub, '7')}.`),
+      box('Por qué funciona', `<p>Comparten el <b>tritono</b> (3ra y 7ma) con los papeles cambiados. Resuelve <b>por semitono</b>: ${sym(sub, '7')} → ${sym(C, 'maj7')}.</p>
+        ${vrow(fig(ck, `Punteado: el tritono ${nn(note(6))}–${nn(note(3))} compartido. Violeta: lo que agrega ${sym(sub, '7')}.`, 'sm'),
+          fig(fifthsSvg({ marks: [{ pos: 0, color: '#1E1E1E' }, { pos: 1, color: V.FN_COLOR.Dominante }, { pos: 7, color: V.ROLE.t }], arrows: [[1, 0, V.FN_COLOR.Dominante], [7, 0, V.ROLE.t]], label: 'V7 y subV7 en el círculo de quintas' }), `En el círculo, el subV7 está enfrente del V7`,))}`),
       box(`subV7 en ${nn(C)} mayor`, table(['Reemplaza a', 'Dominante', 'subV7', 'Resuelve a', ''], rows)),
-      box('Escala', `<p>Sobre el subV7 se usa el <b>Lidio dominante</b> (tensiones 9, #11, 13). Tiene las mismas notas que la escala <b>Alterada</b> del dominante original.</p>`),
+      box('Escala', `<p>Sobre el subV7: <b>Lidio dominante</b> (9, #11, 13), mismas notas que la <b>Alterada</b> del dominante original.</p>`),
     ].join('');
   },
 
@@ -224,21 +281,30 @@ const L = {
       return [`<b>${b.roman}</b>`, sym(r, b.chord), MODE_NAMES_FROM[b.from] || b.from, scaleById(b.scale).name, b.note ? `<small>${b.note}</small>` : '', chordPlay(r, b.chord)];
     });
     return [
-      key(`El intercambio modal (préstamo modal) usa acordes de un <b>modo paralelo</b>, con la misma tónica: en ${nn(C)} mayor se toman acordes de ${nn(C)} menor, ${nn(C)} dórico, ${nn(C)} mixolidio, etc.`),
-      box('Para qué se usa', `<p>Cambia el color sin cambiar de tonalidad. El caso más común es la <b>subdominante menor</b> (IVm7, IVm6, bVImaj7, bVII7…): todos llevan la b6 del modo menor y suelen ir antes de la tónica.</p>`),
-      box(`Acordes prestados en ${nn(C)} mayor`, `${table(['Grado', 'Acorde', 'Viene de', 'Escala', '', ''], rows)}<p class="lsmall">La escala de cada acorde prestado sigue el criterio Berklee: conserva las notas de la tonalidad que no chocan con el acorde.</p>`),
+      key(`El intercambio modal usa acordes de un <b>modo paralelo</b> (misma tónica): en ${nn(C)} mayor se toman acordes de ${nn(C)} menor, dórico, mixolidio…`),
+      box('Mayor y menor paralelos', `<p>En naranja, las notas que trae ${nn(C)} menor: con ellas se arman los acordes prestados.</p>
+        ${vrow(fig(stepsOf(C, 'jonico'), `${nn(C)} mayor`, 'wide'), fig(stepsOf(C, 'eolico', ['b3', 'b6', 'b7']), `${nn(C)} menor`, 'wide'))}
+        <p>El más común: la <b>subdominante menor</b> (IVm7, IVm6, bVImaj7, bVII7), todos con la b6.</p>`),
+      box(`Acordes prestados en ${nn(C)} mayor`, table(['Grado', 'Acorde', 'Viene de', 'Escala', '', ''], rows)),
     ].join('');
   },
 
   impro: () => {
     const NAMES = { maj7: 'maj7', '7': '7', m7: 'm7', m7b5: 'm7(b5)', dim7: '°7', mMaj7: 'm(maj7)', maj7s5: 'maj7(#5)' };
     const rows = Object.entries(NAMES).map(([id, s]) => [`<b>${s}</b>`, IMPRO[id].scales.map((x) => scaleById(x)?.name).filter(Boolean).join(' · '), IMPRO[id].tensions.join(', ')]);
+    const ivs = ['1', '9', '3', '11', '5', '13', '7'];
+    const ck = clockOf(C, ['1', '2', '3', '4', '5', '6', '7'], {
+      label: `${sym(C, 'maj7')} con ${nn(C)} jónico: notas del acorde, tensiones y nota a evitar`,
+      color: (iv) => (iv === '4' ? V.ROLE.x : ['2', '6'].includes(iv) ? V.ROLE.t : V.ROLE[V.roleOf(iv)]),
+    });
     return [
-      key('Improvisar con criterio es elegir <b>qué notas tocar sobre cada acorde</b>. El método chord-scale asigna a cada acorde una escala según su tipo y su función en la tonalidad.'),
-      box('Orden de prioridad', `<ol><li><b>Notas del acorde</b> (1 3 5 7): son las notas de apoyo, en los tiempos fuertes.</li><li><b>Tensiones disponibles</b> (9, 11, 13 y sus alteraciones): dan color.</li><li><b>Notas a evitar</b>: solo de paso, nunca sostenidas.</li></ol>`),
-      box('Recursos sobre un acorde', `<ul><li><b>La escala</b> (chord-scale) según la función: V7 → Mixolidio; V7/VI → Frigio dominante; subV7 → Lidio dominante, etc.</li><li><b>Pentatónicas</b> contenidas en esa escala: sobre ${sym(C, 'maj7')} entran ${nn(C)}, ${nn(note(4))} y ${nn(note(1))} pentatónica mayor (esta última da el sonido lidio).</li><li><b>Arpegios superpuestos</b> desde la 3ra, 5ta o 7ma, que suman extensiones.</li></ul>`),
-      box('Escalas por tipo de acorde', table(['Acorde', 'Escalas (la primera es la habitual)', 'Tensiones posibles'], rows)),
-      tip('el Explorador muestra todo esto para cada acorde de una tonalidad (diatónicos, secundarios, subV7 y prestados), con enlaces para ver cada escala en el mástil.'),
+      key('Improvisar con criterio: elegir <b>qué notas tocar sobre cada acorde</b> según su tipo y su función.'),
+      box('Orden de prioridad', `${vrow(fig(ck, `Sobre ${sym(C, 'maj7')}: 1 3 5 7 de apoyo, 9 y 13 color, la 4 (11) solo de paso`, 'sm'))}
+        <p class="viz-legend"><span><i style="background:#1E1E1E"></i>Tónica</span><span><i style="background:#E07A1F"></i>3ra</span><span><i style="background:#2C6DB5"></i>5ta</span><span><i style="background:#2E9A5F"></i>7ma</span><span><i style="background:#8E4CC0"></i>Tensión</span><span><i style="background:#9a9aa3"></i>A evitar</span></p>
+        <ol><li><b>Notas del acorde</b> en los tiempos fuertes.</li><li><b>Tensiones</b> para dar color.</li><li><b>Notas a evitar</b> solo de paso.</li></ol>`),
+      box('Recursos sobre un acorde', `<ul><li><b>La escala</b> según la función (V7 → Mixolidio, subV7 → Lidio dominante).</li><li><b>Pentatónicas</b> dentro de esa escala.</li><li><b>Arpegios superpuestos</b> desde la 3ra, 5ta o 7ma.</li></ul>`),
+      box('Escalas por tipo de acorde', table(['Acorde', 'Escalas (la primera es la habitual)', 'Tensiones'], rows)),
+      tip('el Explorador muestra todo esto para cada acorde de una tonalidad, con enlaces al mástil.'),
     ].join('');
   },
 };

@@ -46,7 +46,7 @@ export function route(sub) {
 function badge(id) {
   const s = stats(id);
   if (!s) return '';
-  return `<span class="badge">Último ${s.last}% · mejor ${s.best}%</span>`;
+  return `<span class="badge" title="Último ${s.last}%">Mejor ${s.best}%</span>`;
 }
 // Capítulo donde se presenta cada tema (v5). La teoría y la práctica quedan libres; el candado solo avisa.
 function chapterBadge(id) {
@@ -56,8 +56,8 @@ function chapterBadge(id) {
 }
 function renderHome() {
   root.innerHTML = `<div class="t-wrap">
-    <header class="t-intro"><h1>Ejercitación teórica</h1><p>Cada tema tiene dos partes:</p><div class="two-parts"><span>${BOOK}<b>Teoría</b> la explicación, con tablas y ejemplos para escuchar</span><span>${PENCIL}<b>Práctica</b> sesiones de 10 preguntas con corrección inmediata</span></div></header>
-    ${GROUPS.map((g) => `<section class="t-group"><h2>${g}</h2><p class="g-info">${GROUP_INFO[g]}</p><div class="cards">
+    <header class="t-intro"><h1>Ejercitación teórica</h1><div class="two-parts"><span>${BOOK}<b>Teoría</b> explicación con gráficos</span><span>${PENCIL}<b>Práctica</b> 10 preguntas con corrección</span></div></header>
+    ${GROUPS.map((g) => `<section class="t-group"><h2 title="${GROUP_INFO[g]}">${g}</h2><div class="cards">
       ${Object.entries(EXERCISES).filter(([, e]) => e.group === g).map(([id, e]) => `<a class="card" href="#/teoria/${id}"><span class="card-ico">${icon(id)}</span>${chapterBadge(id)}<b>${e.title}</b><span>${e.desc}</span>${id === 'impro' ? '' : badge(id)}</a>`).join('')}
     </div></section>`).join('')}
   </div>`;

@@ -124,3 +124,13 @@
 .card .cap-badge { position: absolute; top: 14px; right: 14px; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; background: var(--soft); color: var(--muted); font-size: 11.5px; font-weight: 600; }
 .card .cap-badge .ico { width: 12px; height: 12px; }
 #v-info .bar .ib:disabled { opacity: .35; cursor: not-allowed; }
+
+/* v5: gráfico de cada capítulo */
+.cap-hero { background: #fff; border-radius: 16px; padding: 16px 12px 12px; margin: 4px 0 14px; }
+.cap-hero:empty { display: none; }
+.cap-hero figure.wide { max-width: 520px; }
+.cap-hero .fn-key { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; justify-content: center; }
+.cap-hero .fn-key i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 6px; }
+.cap-hero figcaption b { color: var(--ink); }
+.cap-hero .fn-key > span, .vi-guide .fn-key > span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.cap-hero .fn-key i { margin-left: 0; }

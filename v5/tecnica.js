@@ -11,6 +11,8 @@ import { createMetronome, METERS, defaultAccents, tapper, tempoName } from './te
 import { EXERCISES, MANOS, OBJETIVOS, OBJ_NAME, MANO_NAME } from './tecnica-ejercicios.js';
 import { parseTab, tabSvg, tabNotes } from './tecnica-tab.js';
 import { PROGS, progression, guideTones, tritone, keyRoot } from './tecnica-vi.js';
+import { fifths, keyboard, ROLE, roleOf, FN_COLOR, roleLegend } from './viz.js';
+import { note as mkNote } from './theory.js';
 import {
   cagedShapes, CAGED_TYPES, triadVoicings, TRIAD_TYPES, TRIAD_SETS, dropVoicings, SEVENTH_TYPES, DROP2_SETS, DROP3_SETS,
   chordBox, midiOfNote,
@@ -100,15 +102,15 @@ function viewHome() {
   const logged = EXERCISES.map((ex) => [ex, store.get('tec.ex.' + ex.id, null)]).filter(([, s]) => s && s.best);
   const recent = logged.sort((a, b) => (b[1].last || '').localeCompare(a[1].last || '')).slice(0, 3);
   const cards = [
-    ['metronomo', 'Metrónomo', 'Compases, subdivisiones, acentos, entrenador de velocidad y compases en silencio.', m.bpm ? `Último tempo: ${m.bpm} bpm` : ''],
-    ['acorde-escalas', 'Sobre un acorde fijo: escalas', 'Sonás un acorde (mayor, menor, disminuido…) y tocás encima los modos y escalas que le corresponden.', ''],
-    ['acorde-arpegios', 'Sobre un acorde fijo: arpegios', 'El mismo acompañamiento, para practicar el arpegio del acorde, sus extensiones y arpegios superpuestos.', ''],
-    ['ejercicios', 'Ejercicios por objetivo', `${EXERCISES.length} ejercicios de mano izquierda, derecha y sincronía, con escalera de tempo y registro.`, logged.length ? `${logged.length} con récord` : ''],
-    ['acordes', 'Formación de acordes', 'Formas CAGED, tríadas en cada grupo de cuerdas e inversiones drop 2 y drop 3.', ''],
-    ['v-i', 'Relaciones V – I', 'V–I, I–V–I y II–V–I en mayor y menor: acordes en loop, notas guía que resuelven y qué tocar encima.', 'Nuevo'],
+    ['metronomo', 'Metrónomo', 'Acentos, subdivisiones y entrenador de velocidad.', m.bpm ? `Último tempo: ${m.bpm} bpm` : ''],
+    ['acorde-escalas', 'Sobre un acorde fijo: escalas', 'Suena un acorde; tocá encima sus escalas.', ''],
+    ['acorde-arpegios', 'Sobre un acorde fijo: arpegios', 'Suena un acorde; tocá encima sus arpegios.', ''],
+    ['ejercicios', 'Ejercicios por objetivo', `${EXERCISES.length} ejercicios de velocidad y calidad de sonido.`, logged.length ? `${logged.length} con récord` : ''],
+    ['acordes', 'Formación de acordes', 'CAGED, tríadas por cuerdas, drop 2 y drop 3.', ''],
+    ['v-i', 'Relaciones V – I', 'Tensión y resolución con notas guía.', 'Nuevo'],
   ];
   root.innerHTML = `<div class="view-pad">
-    ${head('Ejercitación técnica', 'Elegí una herramienta. Todas usan el mismo metrónomo y guardan tu progreso en este dispositivo.')}
+    ${head('Ejercitación técnica', 'Elegí una herramienta; tu progreso queda guardado acá.')}
     <div class="tc-cards">${cards.map(([id, t, d, s], i) => `<a class="tc-card" href="#/tecnica/${id}"><span class="card-ico">${id === 'v-i' ? VI_ICON : icon(id === 'acordes' ? 'acordes2' : id)}</span><b>${t}</b><p>${d}</p>${s ? `<small>${s}</small>` : ''}</a>`).join('')}</div>
     ${recent.length ? `<h2 class="tc-h2">Últimos récords</h2><div class="tc-rec">${recent.map(([ex, s]) => `<a href="#/tecnica/ejercicios/${ex.id}"><span>${ex.name}</span><b>${s.best} bpm</b></a>`).join('')}</div>` : ''}
   </div>`;
@@ -401,7 +403,7 @@ function viewChord(mode) {
 
   root.innerHTML = `<div class="view-pad tc-fixed">
     ${back()}
-    ${head('Sobre un acorde fijo', mode === 'escalas' ? 'Sonás el acorde y tocás encima cada escala compatible. Escuchá qué color aporta cada una.' : 'Sonás el acorde y tocás su arpegio, sus extensiones y arpegios superpuestos.',
+    ${head('Sobre un acorde fijo', mode === 'escalas' ? 'Sonás el acorde y probás encima cada escala: escuchá qué color aporta.' : 'Sonás el acorde y tocás su arpegio, sus extensiones y arpegios superpuestos.',
     `<div class="seg tc-mode"><button data-go="acorde-escalas" class="${mode === 'escalas' ? 'on' : ''}">Escalas y modos</button><button data-go="acorde-arpegios" class="${mode === 'arpegios' ? 'on' : ''}">Arpegios</button></div>`)}
     <section class="tc-box fx-pick">
       <div class="fx-row"><span>Tónica</span><div class="tc-chips roots12">${Array.from({ length: 12 }, (_, p) => `<button data-root="${p}" class="${p === st.root ? 'on' : ''}">${rootChip(p)}</button>`).join('')}</div></div>
@@ -496,7 +498,7 @@ function viewExercises() {
   const list = EXERCISES.filter((ex) => (f.mano === 'todas' || ex.mano === f.mano) && (f.obj === 'todos' || ex.obj.includes(f.obj)));
   root.innerHTML = `<div class="view-pad tc-exs">
     ${back()}
-    ${head('Ejercicios por objetivo', 'Cada ejercicio tiene un tempo inicial (≈60% del objetivo). Subís 4 bpm cada vez que lo tocás limpio 3 veces seguidas.')}
+    ${head('Ejercicios por objetivo', 'Empezá al 60% del tempo objetivo y subí 4 bpm cada 3 pasadas limpias.')}
     <div class="ex-filters">
       <div class="seg" id="fMano">${MANOS.map(([id, n]) => `<button data-mano="${id}" class="${f.mano === id ? 'on' : ''}">${n}</button>`).join('')}</div>
       <div class="tc-chips" id="fObj">${OBJETIVOS.map(([id, n]) => `<button data-obj="${id}" class="${f.obj === id ? 'on' : ''}">${n}</button>`).join('')}</div>
@@ -724,6 +726,31 @@ function leadVoicings(chords, level, set, zone) {
 }
 const VI_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7l5 5-5 5zM12 7h2.5a3 3 0 0 1 0 6H12zM12 13h3l4 4"/><path d="M14 17h6" opacity=".5"/></svg>';
 
+
+// ---------- V–I: gráficos ----------
+const FIFTHS_KEYS = [[0, 0], [4, 0], [1, 0], [5, 0], [2, 0], [6, 0], [3, 1], [1, -1], [5, -1], [2, -1], [6, -1], [3, 0]].map(([l, a]) => mkNote(l, a));
+const posOf = (pc) => (pc * 7) % 12;
+function viCircle(P, mode) {
+  const names = FIFTHS_KEYS.map(nn);
+  const minors = FIFTHS_KEYS.map((k) => nn(transpose(k, '6')) + 'm');
+  const t = notePc(P.tonic);
+  const I = mode === 'mayor' ? { pos: posOf(t), ring: 'out' } : { pos: posOf((t + 3) % 12), ring: 'in' };
+  const V = { pos: posOf(notePc(P.byDeg.V.root)), ring: 'out' };
+  const marks = [{ ...I, color: FN_COLOR.Tónica }, { ...V, color: FN_COLOR.Dominante }];
+  const arrows = [[V.pos, I.pos, FN_COLOR.Dominante]];
+  if (P.byDeg.II) {
+    const ii = notePc(P.byDeg.II.root);
+    const II = mode === 'mayor' ? { pos: posOf((ii + 3) % 12), ring: 'in' } : { pos: posOf(ii), ring: 'out' };
+    marks.push({ ...II, color: FN_COLOR.Subdominante });
+    arrows.unshift([posOf(ii), V.pos, FN_COLOR.Subdominante]);
+  }
+  return fifths(names, minors, { marks, arrows, label: `Círculo de quintas: ${P.chords.map((c) => nn(c.root) + c.chord.sym).join(', ')}`, size: 240 });
+}
+// teclado de un acorde con colores por función (3ra y 7ma = notas guía)
+function viKeys(c) {
+  const r = notePc(c.root);
+  return keyboard(c.chord.intervals.map((iv, i) => ({ i: r + ivSemis(iv), label: nn(c.notes[i]), sub: iv, color: ROLE[roleOf(iv)] })), { label: `Notas de ${nn(c.root)}${c.chord.sym}` });
+}
 function viewVI() {
   const st = Object.assign({ root: 0, mode: 'mayor', prog: 'v-i', level: '7', bars: 1, set: 0, zone: 7, labels: 'interval', click: true }, store.get('tec.vi', {}));
   const save = () => store.set('tec.vi', st);
@@ -746,7 +773,7 @@ function viewVI() {
 
   root.innerHTML = `<div class="view-pad tc-vi">
     ${back()}
-    ${head('Relaciones V – I', 'La dominante (V) crea tensión y la tónica (I) la resuelve. Escuchá y tocá cómo se mueven las notas guía de un acorde al otro.')}
+    ${head('Relaciones V – I', 'El V crea tensión y el I la resuelve: seguí las notas guía.')}
     <section class="tc-box fx-pick">
       <div class="fx-row"><span>Tónica</span><div class="tc-chips roots12">${PICK_KEYS.map((p) => `<button data-root="${p}" class="${p === st.root ? 'on' : ''}">${nn(keyRoot(p, st.mode))}</button>`).join('')}</div></div>
       <div class="fx-row"><span>Modo</span><div class="seg sm">${[['mayor', 'Mayor'], ['menor', 'Menor']].map(([id, n]) => `<button data-mode="${id}" class="${st.mode === id ? 'on' : ''}">${n}</button>`).join('')}</div></div>
@@ -770,9 +797,17 @@ function viewVI() {
     <div class="vi-grid">
       <section class="tc-box vi-guide">
         <h2 class="tc-h2">Notas guía</h2>
-        ${pairs.map(([t, list]) => `<h3>${t}</h3><ul class="vi-moves">${list.map((g) => `<li><span class="vi-mv"><b>${nn(g.from)}</b><small>${g.fromIv}</small><i aria-hidden="true">→</i><b>${nn(g.to)}</b><small>${g.toIv}</small></span><span class="vi-txt">${g.text}</span></li>`).join('')}</ul>`).join('')}
-        ${tri ? `<p class="tc-note vi-tri"><b>Tritono:</b> ${nn(tri.t3)} y ${nn(tri.t7)} (3ra y 7ma del ${sym(V)}) están a 3 tonos. Es la tensión del dominante: resuelve hacia adentro, a ${nn(tri.to3)} y ${nn(tri.to7)}.</p>` : `<p class="tc-note vi-tri">Con 7ma aparece el <b>tritono</b> (3ra y 7ma del V), la tensión más fuerte del dominante.</p>`}
-        ${st.mode === 'menor' ? `<p class="tc-note">En menor la sensible (${nn(V.notes[1])}) no está en la escala menor natural: viene de la <b>menor armónica</b> (7ma subida). Por eso el V es mayor.</p>` : ''}
+        <div class="viz-row">
+          <figure class="sm">${viCircle(P, st.mode)}<figcaption><span class="fn-key"><span><i style="background:${FN_COLOR.Dominante}"></i>V</span><span><i style="background:${FN_COLOR.Tónica}"></i>I</span>${II ? `<span><i style="background:${FN_COLOR.Subdominante}"></i>II</span>` : ''}</span> · el V cae una 5ta al I</figcaption></figure>
+        </div>
+        <div class="viz-row vi-kbs">
+          <figure>${viKeys(V)}<figcaption>${sym(V)}</figcaption></figure>
+          <figure>${viKeys(I)}<figcaption>${sym(I)}</figcaption></figure>
+        </div>
+        ${roleLegend([1, 3, 5, ...(st.level === '7' ? [7] : [])])}
+        ${pairs.map(([t, list]) => `<h3>${t}</h3><ul class="vi-moves">${list.map((g) => `<li><span class="vi-mv"><b>${nn(g.from)}</b><small>${g.fromIv}</small><i aria-hidden="true">${g.fromIv === '1' && g.toIv === '1' ? '→' : g.semis > 0 ? '↗' : g.semis < 0 ? '↘' : '→'}</i><b>${nn(g.to)}</b><small>${g.toIv}</small></span><span class="vi-txt">${g.text}</span></li>`).join('')}</ul>`).join('')}
+        ${tri ? `<p class="tc-note vi-tri"><b>Tritono</b> ${nn(tri.t3)}–${nn(tri.t7)}: resuelve hacia adentro, a ${nn(tri.to3)} y ${nn(tri.to7)}.</p>` : ''}
+        ${st.mode === 'menor' ? `<p class="tc-note">La sensible ${nn(V.notes[1])} viene de la <b>menor armónica</b>: por eso el V es mayor.</p>` : ''}
         <button class="plain sm" id="viGuide">${ICON.sound}<span>Escuchar solo las notas guía</span></button>
       </section>
       <section class="tc-box vi-what">
@@ -784,11 +819,9 @@ function viewVI() {
     <section class="tc-box vi-goal">
       <h2 class="tc-h2">Objetivo</h2>
       <ol>
-        <li>Tocá los acordes en loop, lento (60–70 bpm), cambiando sin cortar el sonido.</li>
-        <li>Sobre el V, terminá cada frase en la <b>3ra</b> (${nn(V.notes[1])}) y resolvela a la <b>tónica</b> (${nn(I.notes[0])}) al entrar el I.</li>
-        ${st.level === '7' ? `<li>Hacé lo mismo con la <b>7ma</b> del V (${nn(V.notes[3])}): bajala a la <b>3ra</b> del I (${nn(I.notes[1])}).</li>` : '<li>Cuando lo tengas, pasá a “Con 7ma” y sumá la 7ma del V bajando a la 3ra del I.</li>'}
-        <li>Arpegiá cada acorde en la misma zona del mástil y buscá la nota más cercana del acorde siguiente.</li>
-        <li>Cambiá de tónica (orden por quintas) y de grupo de cuerdas. Subí 4 bpm cuando salga limpio 3 veces.</li>
+        <li>Loop lento (60–70 bpm), sin cortar el sonido entre acordes.</li>
+        <li>Terminá cada frase del V en la <b>3ra</b> (${nn(V.notes[1])}) y resolvé a ${nn(I.notes[0])}${st.level === '7' ? `; la <b>7ma</b> (${nn(V.notes[3])}) baja a ${nn(I.notes[1])}` : ''}.</li>
+        <li>Cambiá de tónica y de cuerdas; subí 4 bpm cuando salga limpio 3 veces.</li>
       </ol>
     </section>
   </div>`;
