@@ -53,3 +53,12 @@ https://franpiaggio.github.io/modos-griegos/v4/
 - **Técnica**: metrónomo completo, práctica sobre un acorde fijo (escalas y arpegios), 21 ejercicios por objetivo (velocidad / calidad sonora) con escalera de tempo y registro, y formación de acordes (CAGED, tríadas por grupo de cuerdas, drop 2 y drop 3).
 - Investigación de apps y fuentes teóricas: `v4/INVESTIGACION.md`.
 - Sonido: guitarra criolla (nylon) o acústica (acero), una muestra por semitono, del banco MusyngKite (CC-BY-SA 3.0) vía [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts). Animaciones con GSAP.
+
+## Versión 5 (`v5/`): capítulos y logros
+
+https://franpiaggio.github.io/modos-griegos/v5/
+
+- **Capítulos**: el material de estudio en 13 capítulos (intervalos, escalas, modos, pentatónicas, tríadas, tétradas, menor armónica, menor melódica, funciones, dominantes secundarios y V–I, intercambio modal, sustitución tritonal, improvisación). Cada uno tiene teoría, lo que se ve en el mástil, sugerencias técnicas y un **desafío** de 10 preguntas: con 80% se completa y se desbloquea el siguiente. Logros por avance. En Información, escalas y arpegios se desbloquean con los capítulos (Configuración → Modo libre desbloquea todo).
+- **Correcciones del material**: escala de blues (blue note en azul) y pentatónica mixolidia (nota mixolidia en verde) con leyenda de colores en la hoja; menor armónica y melódica marcan la tónica menor y la nota alterada; posiciones siempre desde la más grave; arpegios solo con las notas del acorde, posiciones con la tónica en el dedo 1, sin extensiones por ahora.
+- **Teoría** reescrita: intervalos (distancia, género, tipos), escalas (escala vs. tonalidad, las 4 escalas principales con esquema T/st, armado paso a paso), acordes (tríadas y tétradas) y esquema de la escala cromática para arpegios.
+- **Técnica**: nuevo ejercicio de relaciones V–I, I–V–I y II–V–I (mayor y menor) con notas guía, loop con metrónomo y qué tocar sobre cada acorde.
