@@ -20,7 +20,7 @@ export function mount(el) {
   onPrefs((k) => {
     if (document.body.dataset.sec !== 'capitulos') return;
     if (session) session.render(); else route(current);
-    if (k === 'libre') toast(prefs.libre === 'on' ? 'Modo libre: todo desbloqueado' : 'Por capítulos: la información se desbloquea con cada desafío');
+    if (k === 'libre') toast(prefs.libre === 'on' ? 'Todos los capítulos abiertos' : 'Capítulos en orden: cada desafío abre el siguiente');
   });
 }
 export function leave() { session = null; }
@@ -47,7 +47,7 @@ function stateTag(c) {
 function progressHtml() {
   const n = doneCount();
   return `<div class="cap-progress">
-    <div class="cp-text"><b>${n}</b> de ${CHAPTERS.length} capítulos completados${isFree() ? ' · <span class="cp-free">Modo libre</span>' : ''}</div>
+    <div class="cp-text"><b>${n}</b> de ${CHAPTERS.length} capítulos completados${isFree() ? ' · <span class="cp-free">Todos abiertos</span>' : ''}</div>
     <div class="cp-bar" role="progressbar" aria-label="Capítulos completados" aria-valuemin="0" aria-valuemax="${CHAPTERS.length}" aria-valuenow="${n}"><span style="transform:scaleX(${n / CHAPTERS.length})"></span></div>
   </div>`;
 }
@@ -64,7 +64,7 @@ function logrosHtml() {
 function renderHome() {
   const next = nextChapter();
   root.innerHTML = `<div class="t-wrap cap-wrap">
-    <header class="t-intro"><h1>Capítulos</h1><p>El material de estudio, en orden. Cada capítulo tiene la explicación, sus escalas o arpegios en el mástil y un desafío: con ${PASS}% o más se completa y se desbloquea el siguiente.</p></header>
+    <header class="t-intro"><h1>Capítulos</h1><p>Tu recorrido de estudio, en orden. Cada capítulo junta la explicación, las escalas o arpegios para mirar en el mástil y un desafío: con ${PASS}% o más se completa y se abre el siguiente. Información, Teoría y Técnica quedan siempre libres.</p></header>
     ${progressHtml()}
     ${next ? `<a class="cap-next" href="#/capitulos/${next.id}"><span class="cn-n">${next.n}</span><span class="cn-t"><small>${doneCount() ? 'Seguí con' : 'Empezá por'}</small><b>${next.title}</b></span>${ICON.next}</a>` : '<p class="cap-all">Completaste todos los capítulos.</p>'}
     <ol class="cap-path">${CHAPTERS.map((c) => {
@@ -88,17 +88,17 @@ function renderChapter(c) {
   const items = infoItems(c);
   const t = tries(c.id);
   const prev = CHAPTERS[c.n - 2];
-  const infoOk = s !== 'locked' || isFree();
+  const infoOk = true; // Información siempre libre
   const libLink = (it) => `?k=${it.kind}&r=0&t=${it.id}#/info`;
   root.innerHTML = `<div class="t-wrap narrow cap-wrap">
     ${head(`<small class="cap-kicker">Capítulo ${c.n} de ${CHAPTERS.length}</small>${c.title}`)}
     <p class="cap-desc">${c.desc} ${stateTag(c)}</p>
-    ${s === 'locked' ? `<p class="cap-lock">${icon('lock')}<span>Este capítulo se desbloquea al completar el <a href="#/capitulos/${prev.id}">capítulo ${prev.n}: ${prev.title}</a>. La teoría ya se puede leer.</span></p>` : ''}
+    ${s === 'locked' ? `<p class="cap-lock">${icon('lock')}<span>Este capítulo se desbloquea al completar el <a href="#/capitulos/${prev.id}">capítulo ${prev.n}: ${prev.title}</a>. La teoría y las escalas ya se pueden estudiar.</span></p>` : ''}
     <section class="lbox cap-sec"><h2>${icon('teoria')} 1 · Teoría</h2><p>Leé la explicación y escuchá los ejemplos.</p>
       <div class="cap-links">${c.lessons.map((id) => `<a class="plain" href="#/teoria/${id}">${icon(id)}<span>${EXERCISES[id].title}</span></a>`).join('')}</div>
       <p class="hint-s">Para practicar sin límite, cada tema tiene su Práctica en Teoría.</p></section>
     ${items.length ? `<section class="lbox cap-sec"><h2>${icon('info')} 2 · En el mástil</h2>
-      <p>${infoOk ? 'Estudialas en Información (tocá para abrir la hoja):' : `Se abren en Información al llegar a este capítulo:`}</p>
+      <p>Estudialas en Información (tocá para abrir la hoja):</p>
       <div class="cap-links">${items.map((it) => infoOk ? `<a class="plain" href="${libLink(it)}"><span>${esc(it.name)}</span></a>` : `<span class="plain is-locked" aria-disabled="true">${icon('lock')}<span>${esc(it.name)}</span></span>`).join('')}</div></section>` : ''}
     ${c.tecnica ? `<section class="lbox cap-sec"><h2>${icon('tecnica')} ${items.length ? 3 : 2} · Con la guitarra</h2><p>Llevalo al instrumento:</p>
       <div class="cap-links"><a class="plain" href="#/tecnica${c.tecnica[0] ? '/' + c.tecnica[0] : ''}">${icon(c.tecnica[0] || 'tecnica')}<span>${c.tecnica[1]}</span></a></div></section>` : ''}

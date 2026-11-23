@@ -7,7 +7,7 @@ import { Session, settingsHtml, bindSettings, stats, N, NL } from './teoria-engi
 import { EXERCISES, GROUPS, CH, contexts, tensionsOf, midisOf, scaleLabel } from './teoria-gen.js';
 import { lessonHtml } from './teoria-lessons.js';
 import * as motion from './motion.js';
-import { CHAPTERS, isUnlocked } from './logros.js';
+import { CHAPTERS } from './logros.js';
 
 let root = null;
 let session = null;
@@ -52,8 +52,7 @@ function badge(id) {
 function chapterBadge(id) {
   const c = CHAPTERS.find((x) => x.lessons.includes(id));
   if (!c) return '';
-  const lk = !isUnlocked(c.id);
-  return `<span class="cap-badge${lk ? ' locked' : ''}" title="${lk ? `Capítulo ${c.n} (bloqueado): la teoría se puede leer igual` : `Capítulo ${c.n}: ${c.title}`}">${lk ? icon('lock') : ''}Cap. ${c.n}</span>`;
+  return `<span class="cap-badge" title="Capítulo ${c.n}: ${c.title}">Cap. ${c.n}</span>`;
 }
 function renderHome() {
   root.innerHTML = `<div class="t-wrap">

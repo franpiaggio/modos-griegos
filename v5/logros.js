@@ -128,8 +128,8 @@ export function chapterForInfo(kind, typeId) {
 }
 export function unlockedInfo(kind, typeId) {
   const chapter = chapterForInfo(kind, typeId);
-  // se abre cuando el capítulo está disponible: el material del capítulo se estudia antes de su desafío
-  return { ok: !chapter || isFree() || isUnlocked(chapter.id), chapter };
+  // Información es libre: la progresión vive solo en Capítulos
+  return { ok: true, chapter };
 }
 // Ítems de Información de un capítulo: [{ kind, id, name }]
 export function infoItems(c) {
