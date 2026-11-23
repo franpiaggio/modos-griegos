@@ -8,7 +8,7 @@ import { sheetSvg, layoutLegend, boxOf } from './render.js';
 import * as audio from './audio.js';
 import { pieceSvg, pngBlob, save, printPiece, zipAll, slug } from './export.js';
 import { $, store, prefs, onPrefs, toast, esc, setPref } from './ui.js';
-import { unlockedInfo } from './logros.js';
+import { unlockedInfo, CHAPTERS } from './logros.js';
 import { icon } from './icons.js';
 import * as motion from './motion.js';
 let drawn = false;
@@ -49,7 +49,7 @@ let mounted = false;
 function title(meta, rn) {
   if (state.kind === 'arpegio') return ['Arpegio', `${rn} ${chordLabel(meta)}`];
   if (meta.fam === 'mayor') return ['Modo', meta.name];
-  if (meta.fam === 'penta') return ['Escala', meta.name];
+  if (meta.fam === 'penta') return meta.name.startsWith('Escala ') ? ['Escala', meta.name.slice(7)] : ['Escala', meta.name];
   const isParent = FAMILIES.find((f) => f.id === meta.fam).parent === meta.id;
   return [isParent ? 'Escala' : 'Modo', meta.name];
 }
@@ -60,7 +60,7 @@ function compute() {
   const names = PREF.map((p, pc) => noteName(data.spelled.get(pc) || p, n));
   const rn = noteName(data.root, n);
   const tonicColor = prefs.tonic === 'color' ? meta.color : '#1E1E1E';
-  const display = state.kind === 'escala' ? `${rn} ${meta.name}` : `${rn} ${chordLabel(meta)}`;
+  const display = state.kind === 'escala' ? (meta.name.startsWith('Escala ') ? `${meta.name} de ${rn}` : `${rn} ${meta.name}`) : `${rn} ${chordLabel(meta)}`;
   opts = {
     positions: data.positions, tonicPc: state.root, tonicColor, labelMode: prefs.labels, names, label: data.label,
     showNeck: prefs.neck === 'on', title: title(meta, rn), rn, meta, display,
@@ -194,7 +194,7 @@ function renderPicker() {
     if (g !== grp) { grp = g; html += `<div class="grp">${state.kind === 'escala' ? FAMILIES.find((f) => f.id === g).long : g}</div>`; }
     const name = state.kind === 'escala' ? t.name : `${esc(opts.rn)}${esc(t.sym)} <small class="sym">${esc(t.name)}</small>`;
     const lk = unlockedInfo(state.kind, t.id);
-    const lockTip = lk.ok ? '' : `Se desbloquea en el capítulo ${lk.chapter.n}`;
+    const lockTip = lk.ok ? '' : `Se abre al llegar al capítulo ${lk.chapter.n}`;
     html += `<button data-t="${t.id}" class="${t.id === state.type ? 'on' : ''}${lk.ok ? '' : ' locked'}" aria-current="${t.id === state.type}"${lk.ok ? '' : ' aria-disabled="true"'} title="${esc(lockTip || t.intervals.join(' '))}" style="--c:${prefs.tonic === 'color' ? t.color : '#1E1E1E'}"><span class="dot"></span><span class="nm">${name}${lk.ok ? '' : `<span class="sr"> (bloqueado: ${lockTip})</span>`}</span>${lk.ok ? `<small class="fx">${esc(t.intervals.join(' '))}</small>` : icon('lock', 'lk')}</button>`;
   });
   $('types').innerHTML = html;
@@ -213,16 +213,17 @@ function applyLock() {
   if (!stageLocked) { card.innerHTML = ''; return; }
   if (audio.isPlaying()) stopPlay();
   const c = lk.chapter;
+  const prevCh = CHAPTERS[c.n - 2] || c;
   card.innerHTML = `<span class="lc-ico">${icon('lock')}</span>
-    <h2>Se desbloquea en el capítulo ${c.n}</h2>
-    <p>Superá el desafío de <b>${esc(c.title)}</b> para ver ${esc(opts.display)} en el mástil. Si preferís ver todo, activá el modo libre.</p>
-    <div class="lc-act"><a class="primary" href="#/capitulos/${c.id}">Ir al capítulo ${c.n}</a><button class="plain" data-libre>Desbloquear todo</button></div>`;
+    <h2>Se abre en el capítulo ${c.n} · ${esc(c.title)}</h2>
+    <p>${esc(opts.display)} es parte del capítulo ${c.n}. Para llegar, superá el desafío del capítulo ${prevCh.n} (<b>${esc(prevCh.title)}</b>). Si preferís ver todo, activá el modo libre.</p>
+    <div class="lc-act"><a class="primary" href="#/capitulos/${prevCh.id}">Ir al capítulo ${prevCh.n}</a><button class="plain" data-libre>Desbloquear todo</button></div>`;
   card.querySelector('[data-libre]').addEventListener('click', () => setPref('libre', 'on'));
 }
 function lockToast(t) {
   const lk = unlockedInfo(state.kind, t);
   if (lk.ok) return false;
-  toast(`Se desbloquea en el capítulo ${lk.chapter.n}: ${lk.chapter.title}.`, false, { href: `#/capitulos/${lk.chapter.id}`, label: 'Ir al capítulo' });
+  toast(`Se abre al llegar al capítulo ${lk.chapter.n}: ${lk.chapter.title}.`, false, { href: `#/capitulos/${lk.chapter.id}`, label: 'Ir al capítulo' });
   return true;
 }
 // En pantallas chicas la lista de escalas y arpegios es un cajón lateral; en las grandes está siempre visible.

@@ -193,3 +193,18 @@ details.ex-g { display: block; }
 .lesson { grid-template-columns: minmax(0, 1fr); }
 .lesson > * { min-width: 0; }
 .ltable td .lplay { white-space: nowrap; }
+/* v5: íconos dentro de botones y enlaces siempre con tamaño fijo */
+.primary, .plain { display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+.primary > svg, .plain > svg, .ib > svg { width: 16px; height: 16px; flex: none; }
+.primary > svg:not(.fill), .plain > svg:not(.fill) { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* v5: en celular, el selector del encabezado (Escalas / Arpegios, etc.) baja a su propia fila y el título no se parte palabra por palabra */
+.t-head .t-title { min-width: 0; flex: 1 1 auto; }
+@media (max-width: 760px) {
+  .tc-head2 { flex-wrap: wrap; }
+  .tc-head2 .t-title { flex: 1 1 calc(100% - 60px); }
+  .tc-head2 .t-title h1 { font-size: 24px; line-height: 1.15; }
+  .tc-head2 > :not(.ib):not(.t-title) { flex: 1 1 100%; order: 3; }
+  .cap-logros ul { grid-template-columns: 1fr 1fr; }
+  .cap-logros li { padding: 8px 10px; align-items: flex-start; }
+  .cap-logros li small, .cap-logros li > span:nth-child(2) > span:last-child { font-size: 11.5px; }
+}

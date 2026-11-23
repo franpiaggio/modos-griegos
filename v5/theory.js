@@ -150,6 +150,8 @@ export const FAMILIES = [
   { id: 'armonica', name: 'Menor armónica', long: 'Menor armónica y sus modos', parent: 'menor-armonica', info: 'Menor natural con la 7ma mayor (sensible). Genera el V7 en tonalidad menor; su modo más usado es el Frigio dominante (V7 → Im).' },
   { id: 'melodica', name: 'Menor melódica', long: 'Menor melódica y sus modos', parent: 'menor-melodica', info: 'Menor con 6ta y 7ma mayores (forma ascendente, "menor jazz"). Sus modos dan el Lidio dominante (subV7), el Locrio ♮2 (m7(b5)) y la Alterada (V7alt).' },
 ];
+// "La Dórico", pero "Escala de blues de La" (no "La Escala de blues")
+export const scaleTitle = (rootName, s) => (s.name.startsWith('Escala ') ? `${s.name} de ${rootName}` : `${rootName} ${s.name}`);
 export const scaleById = (id) => SCALES.find((s) => s.id === id) || EXTRA_SCALES.find((s) => s.id === id);
 export const scalesOf = (fam) => SCALES.filter((s) => s.fam === fam);
 

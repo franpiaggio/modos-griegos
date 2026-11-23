@@ -1,5 +1,5 @@
 // Sección "Ejercitación teórica": inicio con tarjetas, ejercicios con sesión de preguntas y explorador de improvisación.
-import { notePc, transpose, spellAll, scaleById, pentatonicsIn, superimpositions, ivSemis, toExt, LETTERS, note } from './theory.js';
+import { scaleTitle, notePc, transpose, spellAll, scaleById, pentatonicsIn, superimpositions, ivSemis, toExt, LETTERS, note } from './theory.js';
 import { prefs, onPrefs, store, esc, ICON } from './ui.js';
 import { icon } from './icons.js';
 import * as audio from './audio.js';
@@ -177,7 +177,7 @@ function drawExplorer(el) {
     const notes = spellAll(c.root, s.intervals);
     const diff = isMain ? '' : s.intervals.filter((iv) => !main.intervals.some((m) => ivSemis(m) === ivSemis(iv))).map(toExt);
     const inLib = !!s.fam;
-    return `<li><div><b>${N(c.root)} ${s.name}</b><small>${NL(notes)}</small>${isMain ? `<small>Fórmula: ${s.intervals.join(' ')}</small>` : diff.length ? `<small>Cambia: ${diff.join(', ')}</small>` : ''}</div>
+    return `<li><div><b>${scaleTitle(N(c.root), s)}</b><small>${NL(notes)}</small>${isMain ? `<small>Fórmula: ${s.intervals.join(' ')}</small>` : diff.length ? `<small>Cambia: ${diff.join(', ')}</small>` : ''}</div>
       <span class="row-act"><button class="ib sm" data-play="${s.id}" aria-label="Escuchar">${ICON.sound}</button>${inLib ? `<a class="plain sm" href="${libLink('escala', pc, s.id)}">Ver en el mástil</a>` : ''}</span></li>`;
   };
   el.innerHTML = `<div class="ex-pick">

@@ -88,7 +88,7 @@ function renderChapter(c) {
   const items = infoItems(c);
   const t = tries(c.id);
   const prev = CHAPTERS[c.n - 2];
-  const infoOk = s === 'done' || isFree();
+  const infoOk = s !== 'locked' || isFree();
   const libLink = (it) => `?k=${it.kind}&r=0&t=${it.id}#/info`;
   root.innerHTML = `<div class="t-wrap narrow cap-wrap">
     ${head(`<small class="cap-kicker">Capítulo ${c.n} de ${CHAPTERS.length}</small>${c.title}`)}
@@ -98,7 +98,7 @@ function renderChapter(c) {
       <div class="cap-links">${c.lessons.map((id) => `<a class="plain" href="#/teoria/${id}">${icon(id)}<span>${EXERCISES[id].title}</span></a>`).join('')}</div>
       <p class="hint-s">Para practicar sin límite, cada tema tiene su Práctica en Teoría.</p></section>
     ${items.length ? `<section class="lbox cap-sec"><h2>${icon('info')} 2 · En el mástil</h2>
-      <p>${infoOk ? 'Ya están desbloqueadas en Información:' : `Se desbloquean en Información al superar el desafío:`}</p>
+      <p>${infoOk ? 'Estudialas en Información (tocá para abrir la hoja):' : `Se abren en Información al llegar a este capítulo:`}</p>
       <div class="cap-links">${items.map((it) => infoOk ? `<a class="plain" href="${libLink(it)}"><span>${esc(it.name)}</span></a>` : `<span class="plain is-locked" aria-disabled="true">${icon('lock')}<span>${esc(it.name)}</span></span>`).join('')}</div></section>` : ''}
     ${c.tecnica ? `<section class="lbox cap-sec"><h2>${icon('tecnica')} ${items.length ? 3 : 2} · Con la guitarra</h2><p>Llevalo al instrumento:</p>
       <div class="cap-links"><a class="plain" href="#/tecnica${c.tecnica[0] ? '/' + c.tecnica[0] : ''}">${icon(c.tecnica[0] || 'tecnica')}<span>${c.tecnica[1]}</span></a></div></section>` : ''}

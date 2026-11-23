@@ -21,7 +21,7 @@ function asc(notes, base = 48) {
 // botón para escuchar: modo 'seq' (melódico) o 'chord' (armónico)
 const play = (midis, mode = 'seq', label = '') => `<button class="lplay" data-play="${midis.join(',')}" data-mode="${mode}" aria-label="Escuchar ${esc(label)}" title="Escuchar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button>`;
 const chordPlay = (root, id) => play(asc(spellAll(root, chordById(id).intervals)), 'chord', sym(root, id));
-const table = (head, rows) => `<div class="ltable"><table><thead><tr>${head.map((h) => `<th>${h || '<span class="sr">Escuchar</span>'}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+const table = (head, rows) => `<div class="ltable" tabindex="0"><table><thead><tr>${head.map((h) => `<th>${h || '<span class="sr">Escuchar</span>'}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 const box = (title, body, cls = '') => `<section class="lbox ${cls}"><h2>${title}</h2>${body}</section>`;
 const tip = (t) => `<p class="ltip"><b>En la guitarra:</b> ${t}</p>`;
 const key = (t) => `<p class="lkey">${t}</p>`;
@@ -45,7 +45,7 @@ function buildExample(root, id, title) {
   // cada nota ocupa 2 columnas; las distancias quedan corridas media nota, entre las dos notas que miden
   const cell = (n, i) => `<td colspan="2" class="${changed[i] ? 'chg' : ''}">${nn(n)}</td>`;
   const gaps = (list, cls = () => '') => `<td class="pad"></td>${list.map((t, i) => `<td colspan="2" class="gap ${cls(t, i)}">${t}</td>`).join('')}<td class="pad"></td>`;
-  return `<div class="ltable build-ex"><table><caption>${title}</caption><tbody>
+  return `<div class="ltable build-ex" tabindex="0" role="region" aria-label="${title}"><table><caption>${title}</caption><tbody>
     <tr><th scope="row">1 · Notas naturales</th>${naturals.map((n) => `<td colspan="2">${nn(n)}</td>`).join('')}</tr>
     <tr><th scope="row">Distancias</th>${gaps(natSch, (t, i) => (t !== target[i] ? 'off' : ''))}</tr>
     <tr><th scope="row">2 · Esquema</th>${gaps(target)}</tr>
@@ -63,7 +63,7 @@ function chromatic() {
     const set = new Map(c.intervals.map((iv) => [ivSemis(iv), iv]));
     return `<tr><th scope="row">${sym(C, id)}</th>${IV.map((_, i) => (set.has(i) ? `<td class="on"><span>${set.get(i)}</span></td>` : '<td><span class="sr">—</span></td>')).join('')}</tr>`;
   }).join('');
-  return `<div class="ltable chroma"><table><thead>${head}</thead><tbody>${rows}</tbody></table></div><p class="lsmall">Fila de arriba: nota (desde ${nn(C)}), intervalo y semitonos desde la tónica. Ejemplo: el arpegio mayor usa las casillas 0, 4 y 7 (1 – 3 – 5); el menor 7, las casillas 0, 3, 7 y 10 (1 – b3 – 5 – b7).</p>`;
+  return `<div class="ltable chroma" tabindex="0" role="region" aria-label="Escala cromática y arpegios"><table><thead>${head}</thead><tbody>${rows}</tbody></table></div><p class="lsmall">Fila de arriba: nota (desde ${nn(C)}), intervalo y semitonos desde la tónica. Ejemplo: el arpegio mayor usa las casillas 0, 4 y 7 (1 – 3 – 5); el menor 7, las casillas 0, 3, 7 y 10 (1 – b3 – 5 – b7).</p>`;
 }
 const PREF_NAMES = (pc) => spellingsOf(pc).map(nn).join('/');
 

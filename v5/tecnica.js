@@ -3,7 +3,7 @@ import { store, prefs, onPrefs, toast, esc, ICON } from './ui.js';
 import { icon } from './icons.js';
 import * as audio from './audio.js';
 import {
-  SCALES, CHORDS, EXTRA_SCALES, IMPRO, FAMILIES, build, noteName, PREF, transpose, bestRoot, ivSemis, chordById,
+  scaleTitle, SCALES, CHORDS, EXTRA_SCALES, IMPRO, FAMILIES, build, noteName, PREF, transpose, bestRoot, ivSemis, chordById,
   superimpositions, toExt, rootLabel, midiOf, notePc,
 } from './theory.js';
 import { sheetSvg, layoutLegend, boxOf } from './render.js';
@@ -290,7 +290,7 @@ function sheetOpts(kind, rootPc, id) {
   const rn = nn(d.root);
   const tonicColor = prefs.tonic === 'color' ? meta.color || '#1E1E1E' : '#1E1E1E';
   const title = kind === 'escala'
-    ? [meta.fam === 'mayor' ? 'Modo' : 'Escala', `${rn} ${meta.name}`]
+    ? [meta.fam === 'mayor' ? 'Modo' : 'Escala', scaleTitle(rn, meta)]
     : ['Arpegio', rn + meta.sym];
   return {
     d, opts: {
@@ -378,7 +378,7 @@ function viewChord(mode) {
   if (mode === 'escalas') {
     const sc = compatibleScales(st.chord, st.root);
     const chordSet = new Set(chord.intervals.map(ivSemis));
-    list = sc.map((s, i) => ({ id: s.id, kind: 'escala', pc: st.root, name: `${nn(rootNote)} ${s.name}`, fam: s.fam,
+    list = sc.map((s, i) => ({ id: s.id, kind: 'escala', pc: st.root, name: scaleTitle(nn(rootNote), s), fam: s.fam,
       adds: extOrder(s.intervals.filter((iv) => !chordSet.has(ivSemis(iv))).map(toExt)).join(' '), note: s.char, first: i === 0 }));
   } else {
     const o = arpeggioOptions(st.chord, st.root, rootNote);
@@ -778,7 +778,7 @@ function viewVI() {
       <section class="tc-box vi-what">
         <h2 class="tc-h2">Qué tocar</h2>
         ${uniq.map((c) => `<div class="vi-deg"><b>Sobre ${sym(c)}</b> <small>${c.roman}</small>
-          <ul>${c.scales.map((s, k) => `<li><a href="${scaleLink(s)}">${nn(s.root)} ${s.scale.name}</a>${k === 0 ? ' <em>principal</em>' : ''}</li>`).join('')}<li><a href="${arpLink(c)}">Arpegio ${sym(c)}</a> <small>${c.chord.intervals.join(' ')}</small></li></ul></div>`).join('')}
+          <ul>${c.scales.map((s, k) => `<li><a href="${scaleLink(s)}">${scaleTitle(nn(s.root), s.scale)}</a>${k === 0 ? ' <em>principal</em>' : ''}</li>`).join('')}<li><a href="${arpLink(c)}">Arpegio ${sym(c)}</a> <small>${c.chord.intervals.join(' ')}</small></li></ul></div>`).join('')}
       </section>
     </div>
     <section class="tc-box vi-goal">
