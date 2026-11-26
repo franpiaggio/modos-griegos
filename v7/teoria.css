@@ -186,3 +186,10 @@
 .lesson .viz-row > figure:not(.sm):not(.wide) { flex: 0 1 240px; }
 /* los textos .sr (position:absolute) dentro de tablas desplazables no deben ensanchar la página en celular */
 .ltable { position: relative; }
+/* v7: mástiles de guitarra a tamaño completo dentro de las lecciones */
+.lesson .viz-row > figure.neckf:not(.sm):not(.wide), .viz-row > figure.neckf:not(.sm):not(.wide), .cap-hero > figure.neckf { flex: 1 1 300px; max-width: 640px; }
+.lesson .viz-row > figure.neckf figcaption, .cap-hero > figure.neckf figcaption { max-width: 60ch; margin: 4px auto 0; text-align: center; display: block; }
+.neck-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; margin: 8px 0 4px; }
+.neck-grid figure { margin: 0; text-align: center; }
+.neck-grid figcaption { font-size: 12.5px; color: var(--muted); }
+@media (max-width: 560px) { .neck-grid { grid-template-columns: 1fr; } }

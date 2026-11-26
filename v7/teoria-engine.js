@@ -7,6 +7,7 @@
 //   answerText(), explain(), listen?() (suena antes de responder), sound?() (suena al corregir) }
 import { LETTERS, LATIN, note, noteName, notePc, sameNote, intervalBetween } from './theory.js';
 import * as V from './viz.js';
+import * as Gt from './guitar.js';
 import { prefs, store, esc, ICON } from './ui.js';
 import * as motion from './motion.js';
 
@@ -139,27 +140,24 @@ export class Session {
       <div class="fb-head">${r.ok ? ICON.check : ICON.x}<b>${r.ok ? 'Correcto' : 'No'}</b>${r.ok ? '' : `<span>Respuesta: <b>${val(q.answerText)}</b></span>`}</div>
       ${r.msg ? `<p class="fb-msg">${r.msg}</p>` : ''}
       <p class="fb-exp">${val(q.explain)}</p>
-      ${this.answerKeyboard()}
+      ${this.answerNeck()}
       <div class="fb-act">${q.sound ? `<button class="plain sm" data-sound>${ICON.sound}<span>Escuchar</span></button>` : '<span></span>'}<button class="primary" data-next>${this.i + 1 >= this.count ? 'Ver resultado' : 'Siguiente'} <kbd>Enter</kbd></button></div>
     </div>`;
   }
-  // Teclado con la respuesta correcta (escalas, acordes, arpegios: 3 o más notas escritas).
-  // En acordes y arpegios cada nota lleva el color de su función (1, 3, 5, 7, tensión).
-  answerKeyboard() {
+  // La respuesta en el mástil: cada pregunta puede traer su propio gráfico (q.neck); si no, las notas escritas
+  // de la respuesta (escalas, acordes, arpegios, intervalos) se ubican en una posición o en la forma del intervalo.
+  answerNeck() {
     const q = this.q;
-    if (q.kind !== 'notes' || !Array.isArray(q.answer) || q.answer.length < 3 || q.answer[0]?.l === undefined) return '';
-    const notes = q.answer;
-    const chordish = /acorde|arpegio/i.test(val(q.kicker) || '');
-    let prev = -1;
-    const m = notes.map((n) => { let x = notePc(n); while (x <= prev) x += 12; prev = x; return x; });
-    if (m[m.length - 1] >= 36) return '';
-    const ivOf = (n) => { const b = intervalBetween(notes[0], n); return b.deg === 1 ? '1' : String(b.deg); };
-    const marks = notes.map((n, i) => {
-      const deg = ivOf(n);
-      const color = chordish ? V.ROLE[V.roleOf(Number(deg) === 2 ? '9' : Number(deg) === 4 ? '11' : Number(deg) === 6 ? '13' : deg)] : i === 0 ? V.ROLE[1] : '#5f5f69';
-      return { i: m[i], label: N(n), color };
-    });
-    return `<div class="fb-kb">${V.keyboard(marks, { octaves: Math.max(1, Math.ceil((m[m.length - 1] + 1) / 12)), label: `Respuesta en el teclado: ${notes.map(N).join(' ')}` })}</div>`;
+    let svg = '';
+    try {
+      if (q.neck) svg = val(q.neck);
+      else if (q.kind === 'notes' && Array.isArray(q.answer) && q.answer[0]?.l !== undefined) {
+        const notes = q.given && q.answer[0] !== q.given[0] && !q.ordered ? [q.given[0], ...q.answer.filter((n) => !(n.l === q.given[0].l && n.a === q.given[0].a))] : q.answer;
+        if (notes.length >= 2) svg = Gt.answerNeck(notes, { chordish: /acorde|arpegio|armar/i.test(val(q.kicker) || '') });
+      }
+    } catch (e) { svg = ''; }
+    if (!svg) return '';
+    return `<figure class="fb-neck">${svg}<figcaption>En la guitarra${q.neckCap ? `: ${val(q.neckCap)}` : ''}</figcaption></figure>`;
   }
   bind() {
     const el = this.el;

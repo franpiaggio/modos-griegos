@@ -176,3 +176,51 @@ export function ruler(letters, semis, { label = 'Intervalo', name = '' } = {}) {
 export function roleLegend(roles = [1, 3, 5, 7, 't']) {
   return `<p class="viz-legend">${roles.map((r) => `<span><i style="background:${ROLE[r]}"></i>${ROLE_NAME[r]}</span>`).join('')}</p>`;
 }
+
+// ---------------------------------------------------------------- mástil de guitarra (horizontal)
+// Vista del guitarrista: la 1ra cuerda (aguda) arriba y la 6ta abajo; los trastes crecen hacia la derecha.
+// marks: [{ s: cuerda 1..6, f: traste (0 = al aire), label, color, ring: true (contorno), dim: true (atenuada) }]
+// lines: [[índice de mark, índice de mark, color]] para unir notas (un intervalo, una resolución).
+// names: nombres de las cuerdas de la 1ra a la 6ta. from/to: trastes visibles (se calculan si faltan).
+const INLAY = new Set([3, 5, 7, 9, 15, 17]);
+export function fretboard(marks, { from, to, label = 'Mástil', names = null, lines = [], minFrets = 4 } = {}) {
+  const fs = marks.map((m) => m.f);
+  const fretted = fs.filter((f) => f > 0);
+  let lo = from ?? (fretted.length ? Math.max(0, Math.min(...fretted) - 1) : 0);
+  if (fs.includes(0)) lo = 0;
+  let hi = to ?? Math.max(lo + minFrets, ...fs.map((f) => f + (f === lo ? 1 : 0)));
+  if (hi - lo < minFrets) hi = lo + minFrets;
+  const cells = hi - lo;
+  const fw = cells > 9 ? 42 : 54, sg = 28, T = 20;
+  const L = (names ? 30 : 8) + (lo === 0 ? 26 : 0);
+  const W = L + cells * fw + 10, H = T + sg * 5 + 34;
+  const y = (s) => T + (s - 1) * sg;
+  const x = (f) => (f === 0 ? L - 15 : L + (f - lo - 0.5) * fw);
+  let b = `<rect x="${L}" y="${T - 10}" width="${cells * fw}" height="${sg * 5 + 20}" rx="4" fill="#f6f0e6"/>`;
+  for (let f = lo + 1; f <= hi; f++) {
+    const cx = L + (f - lo - 0.5) * fw;
+    if (INLAY.has(f)) b += `<circle cx="${cx}" cy="${T + sg * 2.5}" r="5" fill="#e4d8c4"/>`;
+    if (f === 12 || f === 24) b += `<circle cx="${cx}" cy="${T + sg * 1.5}" r="5" fill="#e4d8c4"/><circle cx="${cx}" cy="${T + sg * 3.5}" r="5" fill="#e4d8c4"/>`;
+    b += `<text x="${cx}" y="${H - 6}" style="font-size:12px;fill:#8a8a93">${f}</text>`;
+  }
+  for (let k = 1; k <= cells; k++) b += `<rect x="${L + k * fw - 1.2}" y="${T - 10}" width="2.4" height="${sg * 5 + 20}" fill="#cbbfac"/>`;
+  b += lo === 0 ? `<rect x="${L - 3}" y="${T - 12}" width="6" height="${sg * 5 + 24}" rx="2" fill="#1b1b1f"/>` : `<rect x="${L - 1}" y="${T - 10}" width="2" height="${sg * 5 + 20}" fill="#cbbfac"/>`;
+  for (let s = 1; s <= 6; s++) {
+    b += `<rect x="${lo === 0 ? L - 24 : L}" y="${y(s) - (0.5 + s * 0.17)}" width="${cells * fw + (lo === 0 ? 24 : 0)}" height="${1 + s * 0.34}" fill="#9d907c"/>`;
+    if (names) b += `<text x="${13}" y="${y(s) + 4}" style="font-size:12px;fill:#8a8a93">${esc(names[s - 1])}</text>`;
+  }
+  lines.forEach(([i, j, col]) => {
+    const a = marks[i], c = marks[j];
+    if (a && c) b += `<line x1="${x(a.f)}" y1="${y(a.s)}" x2="${x(c.f)}" y2="${y(c.s)}" stroke="${col || '#1b1b1f'}" stroke-width="2.4" stroke-dasharray="4 3" stroke-linecap="round"/>`;
+  });
+  marks.forEach((m) => {
+    const col = m.color || '#1b1b1f';
+    const t = String(m.label ?? '');
+    const fsz = t.length > 3 ? 9 : t.length > 2 ? 10.5 : 12;
+    b += m.ring
+      ? `<circle cx="${x(m.f)}" cy="${y(m.s)}" r="12.5" fill="#fff" stroke="${col}" stroke-width="2.2"/>${t ? `<text x="${x(m.f)}" y="${y(m.s) + 4.2}" style="font-size:${fsz}px;font-weight:700;fill:${col}">${esc(t)}</text>` : ''}`
+      : `<circle cx="${x(m.f)}" cy="${y(m.s)}" r="12.5" fill="${col}" ${m.dim ? 'opacity=".35"' : ''}/>${t ? `<text x="${x(m.f)}" y="${y(m.s) + 4.2}" style="font-size:${fsz}px;font-weight:700;fill:#fff">${esc(t)}</text>` : ''}`;
+  });
+  // tamaño real (1 unidad = 1 px como máximo): un mástil corto no se agranda y uno largo se achica parejo
+  return svg(W, H, label, b, 'neck').replace('<svg ', `<svg style="max-width:${Math.round(W * 1.45)}px" `);
+}

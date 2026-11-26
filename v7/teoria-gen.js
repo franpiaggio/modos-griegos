@@ -7,6 +7,9 @@ import {
 import { N, NL } from './teoria-engine.js';
 import { prefs } from './ui.js';
 import * as audio from './audio.js';
+import * as Gt from './guitar.js';
+
+const BLACK = '#1E1E1E', GREY = '#6b6b75';
 
 // ---------------------------------------------------------------- utilidades
 const JON = scaleById('jonico').intervals;
@@ -89,6 +92,7 @@ export const intervalos = {
           listenButtons: [['Melódico', 'main'], ['Armónico', 'arm']], listenAlt: () => audio.playChord(pair, { strum: 0 }),
           ...choice(opts.map(([x]) => ({ id: x, label: x })), id),
           answerText: id, explain: () => `${id}: ${s} semitono${s > 1 ? 's' : ''}.`, sound: () => audio.playSeq(pair, { step: 0.6 }),
+          neck: () => Gt.intervalShape(note(0), id === '8J' ? '8' : id === '4A/5d' ? '#4' : idToFormula(id), { s: 5 }), neckCap: () => `${id} es siempre la misma forma: ${s} trastes en una cuerda`,
         };
       }
       const id = pick(set);
@@ -107,11 +111,13 @@ export const intervalos = {
         return {
           kicker: 'Construir intervalo', prompt: () => `<b>${id}</b> ${word} desde <b>${N(a)}</b>`, sub: intervalLong(id),
           kind: 'notes', slots: 1, ordered: true, answer: [b], answerText: () => N(b), explain, sound: () => audio.playSeq(pair),
+          neck: () => Gt.answerNeck([lo, hi]), neckCap: () => `${st} trastes en la misma cuerda`,
         };
       }
       return {
         kicker: `Identificar · ${word}`, prompt: () => `<b>${N(a)}</b> ${down ? '↓' : '↑'} <b>${N(b)}</b>`, sub: down ? 'La segunda nota está abajo.' : 'La segunda nota está arriba.',
         ...choice(set.map((x) => ({ id: x, label: x })), id), answerText: id, explain, sound: () => audio.playSeq(pair),
+        neck: () => Gt.answerNeck([lo, hi]), neckCap: () => `${st} trastes en la misma cuerda`,
       };
     };
   },
@@ -145,6 +151,7 @@ export const escalas = {
         answerText: () => NL(notes),
         explain: () => `Fórmula ${s.intervals.join(' ')}. Una letra por grado${s.intervals.length < 7 ? ' (los grados que faltan se saltean)' : ''}: ${NL(notes)}.`,
         sound: () => audio.playSeq(midis, { step: 0.28, dur: 0.4 }),
+        neck: () => Gt.position(r, s.intervals), neckCap: () => `${N(r)} ${scaleLabel(s)} en una posición, desde la tónica en negro`,
       };
     };
   },
@@ -179,7 +186,7 @@ export const acordes = {
         return {
           kicker: 'Armar acorde', prompt: () => `<b>${CH(r, c)}</b>`, sub: `${c.name}: escribí sus ${notes.length} notas (en cualquier orden).`,
           kind: 'notes', slots: notes.length, given: [r], ordered: false, answer: notes, answerText: () => NL(notes), explain,
-          sound: () => audio.playChord(midis),
+          sound: () => audio.playChord(midis), neck: () => Gt.chordNeck(r, c), neckCap: () => `arpegio de ${CH(r, c)} en una posición`,
         };
       }
       const others = shuffle(pool.filter((x) => x !== c.id)).slice(0, 5);
@@ -187,6 +194,7 @@ export const acordes = {
       return {
         kicker: 'Identificar acorde', prompt: () => NL(notes), sub: `Fundamental: ${N(r)}. ¿Qué acorde es?`,
         ...choice(opts, c.id), answerText: () => CH(r, c), explain, sound: () => audio.playChord(midis),
+        neck: () => Gt.chordNeck(r, c), neckCap: () => `arpegio de ${CH(r, c)} en una posición`,
       };
     };
   },
@@ -223,6 +231,7 @@ export const grados = {
           answerText: () => `${ROM[d]} (${N(notes[d])})`,
           explain: () => notes.map((n, i) => `${ROM[i]} ${N(n)}`).join(' · '),
           sound: () => audio.playSeq([midis[0], midis[d]], { step: 0.6 }),
+          neck: () => Gt.position(k, s.intervals, { label: 'iv', color: (iv) => (iv === s.intervals[d] ? Gt.ORANGE : iv === '1' ? BLACK : GREY) }), neckCap: () => `el grado ${ROM[d]} (${N(notes[d])}) en naranja, contado desde la tónica`,
         };
       }
       if (tipo === 'detectar') {
@@ -244,6 +253,7 @@ export const grados = {
           ...choice(opts, s.id), wide: true, answerText: () => `${N(r)} ${scaleLabel(s)}`,
           explain: () => `Intervalos desde ${N(r)}: ${s.intervals.join(' ')}${s.char ? ` · rasgo propio: ${s.char}` : ''}.`,
           sound: () => audio.playSeq(midisOf(r, [...s.intervals, '8'], 55), { step: 0.28 }),
+          neck: () => Gt.position(r, s.intervals, { label: 'iv' }), neckCap: () => `${N(r)} ${scaleLabel(s)} con sus intervalos`,
         };
       }
       // tonalidad de un grupo de acordes: siempre incluye el V7 (único en cada tonalidad mayor)
@@ -258,6 +268,7 @@ export const grados = {
         ...choice(opts, `${k.l}${k.a}`), answerText: () => keyName(k),
         explain: () => `${chords.map((c) => `${CH(c.root, c.chord)} = ${ds[c.d].roman}`).join(', ')} en ${keyName(k)}. El acorde dominante (7) aparece una sola vez en cada tonalidad mayor: es el V7.`,
         sound: () => audio.playSeq(chords.map((c) => midisOf(c.root, c.chord.intervals)), { step: 0.9 }),
+        neck: () => Gt.rootsNeck(k, [{ iv: '1', label: 'I', color: BLACK }, ...chords.filter((c) => c.d !== 0).map((c) => ({ iv: JON[c.d], label: ds[c.d].roman.replace(/(maj7|m7\(b5\)|m7|7)$/, ''), color: c.d === 4 ? '#CE3468' : GREY }))]), neckCap: () => `las fundamentales de estos acordes en la zona de ${keyName(k)}: la tónica (I) en negro y el V7 en rojo`,
       };
     };
   },
@@ -316,6 +327,7 @@ export const oido = {
         answerText: () => `${d} (${N(noteSp)} en ${keyName(k)})`,
         explain: () => `Resolución: ${d === '1' ? 'ya es la tónica' : 'la nota se mueve por grados hasta la tónica más cercana'}.`,
         sound: () => audio.playSeq(resolution(T, semis), { step: 0.42, dur: 0.5 }),
+        neck: () => Gt.position(k, JON.includes(d) ? JON : [...JON, d], { label: 'iv', color: (iv) => (iv === d ? Gt.ORANGE : iv === '1' ? BLACK : GREY) }), neckCap: () => `el ${d} de ${keyName(k)} en naranja: buscalo y resolvelo a la tónica`,
       };
     };
   },
@@ -355,12 +367,14 @@ export const funciones = {
             kicker: 'Cifrar', prompt: () => `En <b>${kn()}</b>, ¿cuál es el <b>${d.roman}</b>?`,
             ...choice(all.map((c) => ({ id: String(c.deg), label: () => CH(c.root, c.chord) })), String(d.deg)),
             answerText: () => CH(d.root, d.chord), explain, sound,
+            neck: () => Gt.chordNeck(d.root, d.chord), neckCap: () => `${CH(d.root, d.chord)} (${d.roman}) en una posición`,
           };
         }
         return {
           kicker: 'Grado', prompt: () => `En <b>${kn()}</b>, <b>${CH(d.root, d.chord)}</b> es el…`,
           ...choice(all.map((c) => ({ id: String(c.deg), label: c.roman })), String(d.deg)),
           answerText: d.roman, explain, sound,
+          neck: () => Gt.chordNeck(d.root, d.chord), neckCap: () => `${CH(d.root, d.chord)} (${d.roman}) en una posición`,
         };
       }
       const k = pick(keys(cfg.raices));
@@ -374,7 +388,7 @@ export const funciones = {
           kicker: 'Acorde extendido', prompt: () => `En <b>${keyName(k)}</b>, armá el <b>${rom}</b>`, sub: `${notes.length} notas, en cualquier orden. Todas son diatónicas.`,
           kind: 'notes', slots: notes.length, given: [r], ordered: false, answer: notes, answerText: () => `${CH(r, c)}: ${NL(notes)}`,
           explain: () => `${rom} = ${CH(r, c)} (${c.intervals.join(' ')}).${cid === '13' ? ' En el 13 se omite la 11 (choca con la 3ra).' : ''}`,
-          sound: () => audio.playChord(midisOf(r, c.intervals)),
+          sound: () => audio.playChord(midisOf(r, c.intervals)), neck: () => Gt.chordNeck(r, c), neckCap: () => `${CH(r, c)}: las extensiones en violeta`,
         };
       }
       const pool = tipo === 'evitar' ? MAJOR_FUNCTIONS.filter((f) => f.avoid.length && f.roman !== 'IIm7') : MAJOR_FUNCTIONS;
@@ -389,6 +403,7 @@ export const funciones = {
         return {
           kicker: 'Tensiones disponibles', prompt: () => `<b>${f.roman}</b> en tonalidad mayor`, sub: () => `Ej.: ${ctxt()}. Escala: ${sc.name}.`,
           kind: 'multi', options: TENSION_OPTS, answer: f.tensions, answerText: f.tensions.join(', '), explain, sound,
+          neck: () => Gt.scaleOnChord(r, sc, c, f.avoid), neckCap: () => `${N(r)} ${sc.name.toLowerCase()} sobre ${CH(r, c)}: tensiones en violeta, a evitar en gris claro`,
           check: (sel) => {
             const s = new Set(sel);
             const eq = (arr) => arr.length === s.size && arr.every((x) => s.has(x));
@@ -401,6 +416,7 @@ export const funciones = {
       return {
         kicker: 'Notas a evitar', prompt: () => `<b>${f.roman}</b> en tonalidad mayor`, sub: () => `Ej.: ${ctxt()}. Escala: ${sc.name}. ¿Qué nota(s) se evitan?`,
         kind: 'multi', options: TENSION_OPTS, answer: f.avoid, answerText: f.avoid.join(', '), explain, sound,
+        neck: () => Gt.scaleOnChord(r, sc, c, f.avoid), neckCap: () => `${N(r)} ${sc.name.toLowerCase()} sobre ${CH(r, c)}: a evitar en gris claro`,
       };
     };
   },
@@ -431,6 +447,7 @@ export const extensiones = {
           kind: 'notes', slots: notes.length, given: [r], ordered: true, answer: notes, answerText: () => NL(notes),
           explain: () => `${c.intervals.join(' ')} → ${NL(notes)}. La 9 es la 2 una octava arriba, la 11 la 4 y la 13 la 6.`,
           sound: () => audio.playSeq(midisOf(r, c.intervals), { step: 0.3 }),
+          neck: () => Gt.chordNeck(r, c), neckCap: () => `arpegio de ${CH(r, c)}: las extensiones en violeta`,
         };
       }
       const [cid, sid, avoid] = pick(SUP_CTX);
@@ -444,17 +461,19 @@ export const extensiones = {
       const bad = sup.tones.filter((t) => avoid.includes(t));
       const explain = () => `${CH(sup.root, sup.chord)} = ${NL(spellAll(sup.root, sup.chord.intervals))}: sobre ${CH(r, c)} son ${sup.tones.join(', ')} (escala ${sc.name}).${bad.length ? ` Ojo: incluye ${bad.join(', ')}, nota a evitar sobre ${CH(r, c)}.` : ''}`;
       const sound = () => audio.playSeq([midisOf(r, c.intervals), ...midisOf(sup.root, sup.chord.intervals, 55)], { step: 0.32 });
+      const neck = () => Gt.overlay(r, c.intervals, sup.root, sup.chord.intervals, { labelB: sup.tones, colorB: '#8E4CC0' });
+      const neckCap = () => `${CH(r, c)} en una posición; los números muestran qué es cada nota de ${CH(sup.root, sup.chord)} sobre ${CH(r, c)}, y en contorno las que no están en el acorde`;
       if (tipo === 'aporte') {
         const opts = uniqueBy(shuffle([sup, ...shuffle(sups.filter((x) => x.deg !== deg)).slice(0, 4)]), (x) => x.label);
         return {
           kicker: 'Superposición', prompt: () => `Sobre <b>${CH(r, c)}</b> tocás el arpegio de <b>${CH(sup.root, sup.chord)}</b>`, sub: '¿Qué grados del acorde suenan?',
-          ...choice(opts.map((x) => ({ id: x.label, label: x.label })), sup.label), answerText: sup.label, explain, sound,
+          ...choice(opts.map((x) => ({ id: x.label, label: x.label })), sup.label), answerText: sup.label, explain, sound, neck, neckCap,
         };
       }
       return {
         kicker: 'Superposición', prompt: () => `Sobre <b>${CH(r, c)}</b>, ¿qué arpegio desde su <b>${DEG_WORD[deg]}</b> da <b>${sup.label}</b>?`, sub: `Escala: ${sc.name}.`,
         ...choice(sups.map((x) => ({ id: String(x.deg), label: () => CH(x.root, x.chord) })), String(deg)),
-        answerText: () => CH(sup.root, sup.chord), explain, sound,
+        answerText: () => CH(sup.root, sup.chord), explain, sound, neck, neckCap,
       };
     };
   },
@@ -485,25 +504,27 @@ export const secundarios = {
       const sc = scaleById(s.scale);
       const kn = () => keyName(k);
       const sound = () => audio.playSeq([midisOf(s.root, dom.intervals), midisOf(t.root, t.chord.intervals)], { step: 1 });
+      const neck = () => Gt.overlay(s.root, dom.intervals, t.root, t.chord.intervals, { guides: [['3', '1']] });
+      const neckCap = () => `relleno: ${CH(s.root, '7')}; contorno: ${CH(t.root, t.chord)}, al que resuelve. La 3ra de ${CH(s.root, '7')} sube un traste`;
       const explain = () => `${secLabel(s)} = ${CH(s.root, '7')} (${NL(notes)}): dominante de ${CH(t.root, t.chord)} (${t.roman}), una 5ta justa arriba. Escala: ${sc.name}; tensiones ${s.tensions.join(', ')}${s.note ? ` (${s.note})` : ''}.`;
       if (tipo === 'cifrar') {
         const opts = [...secs, { id: 'V', root: ds[4].root }].map((x) => ({ id: `${x.root.l}${x.root.a}`, label: () => CH(x.root, '7') }));
-        return { kicker: 'Cifrar', prompt: () => `En <b>${kn()}</b>, ¿cuál es el <b>${secLabel(s)}</b>?`, ...choice(shuffle(opts), `${s.root.l}${s.root.a}`), answerText: () => CH(s.root, '7'), explain, sound };
+        return { kicker: 'Cifrar', prompt: () => `En <b>${kn()}</b>, ¿cuál es el <b>${secLabel(s)}</b>?`, ...choice(shuffle(opts), `${s.root.l}${s.root.a}`), answerText: () => CH(s.root, '7'), explain, sound, neck, neckCap };
       }
       if (tipo === 'armar') {
-        return { kicker: 'Armar', prompt: () => `En <b>${kn()}</b>, escribí las notas del <b>${secLabel(s)}</b>`, sub: '4 notas, en cualquier orden.', kind: 'notes', slots: 4, ordered: false, answer: notes, answerText: () => `${CH(s.root, '7')}: ${NL(notes)}`, explain, sound };
+        return { kicker: 'Armar', prompt: () => `En <b>${kn()}</b>, escribí las notas del <b>${secLabel(s)}</b>`, sub: '4 notas, en cualquier orden.', kind: 'notes', slots: 4, ordered: false, answer: notes, answerText: () => `${CH(s.root, '7')}: ${NL(notes)}`, explain, sound, neck, neckCap };
       }
       if (tipo === 'identificar') {
         const opts = [...SECONDARY.map((x) => ({ id: x.id, label: secLabel(x) })), { id: 'V', label: 'V7 (primario)' }];
-        return { kicker: 'Reconocer', prompt: () => `En <b>${kn()}</b>, <b>${CH(s.root, '7')}</b> es el…`, ...choice(opts, s.id), answerText: secLabel(s), explain, sound };
+        return { kicker: 'Reconocer', prompt: () => `En <b>${kn()}</b>, <b>${CH(s.root, '7')}</b> es el…`, ...choice(opts, s.id), answerText: secLabel(s), explain, sound, neck, neckCap };
       }
       if (tipo === 'resuelve') {
-        return { kicker: 'Resolución', prompt: () => `En <b>${kn()}</b>, <b>${CH(s.root, '7')}</b> resuelve en…`, ...choice(ds.slice(0, 6).map((d) => ({ id: String(d.deg), label: () => CH(d.root, d.chord) })), String(s.target)), answerText: () => `${CH(t.root, t.chord)} (${t.roman})`, explain, sound };
+        return { kicker: 'Resolución', prompt: () => `En <b>${kn()}</b>, <b>${CH(s.root, '7')}</b> resuelve en…`, ...choice(ds.slice(0, 6).map((d) => ({ id: String(d.deg), label: () => CH(d.root, d.chord) })), String(s.target)), answerText: () => `${CH(t.root, t.chord)} (${t.roman})`, explain, sound, neck, neckCap };
       }
       if (tipo === 'tensiones') {
         return {
           kicker: 'Tensiones', prompt: () => `Tensiones disponibles del <b>${secLabel(s)}</b>`, sub: () => `Ej.: ${CH(s.root, '7')} en ${kn()}. Salen de las notas diatónicas de la tonalidad.`,
-          kind: 'multi', options: TENSION_OPTS, answer: s.tensions, answerText: s.tensions.join(', '), explain, sound,
+          kind: 'multi', options: TENSION_OPTS, answer: s.tensions, answerText: s.tensions.join(', '), explain, sound, neck, neckCap,
           check: (sel) => {
             const set = new Set(sel);
             const eq = (arr) => arr.length === set.size && arr.every((x) => set.has(x));
@@ -514,7 +535,7 @@ export const secundarios = {
         };
       }
       const opts = SCALE_OPTS_DOM.filter((x) => !(s.id === 'V/III' && x === 'alterada')).map((id) => ({ id, label: scaleById(id).name }));
-      return { kicker: 'Escala', prompt: () => `¿Qué escala corresponde al <b>${secLabel(s)}</b> en tonalidad mayor?`, sub: () => `Ej.: ${CH(s.root, '7')} en ${kn()}.`, ...choice(opts, s.scale), answerText: sc.name, explain, sound };
+      return { kicker: 'Escala', prompt: () => `¿Qué escala corresponde al <b>${secLabel(s)}</b> en tonalidad mayor?`, sub: () => `Ej.: ${CH(s.root, '7')} en ${kn()}.`, ...choice(opts, s.scale), answerText: sc.name, explain, sound, neck, neckCap };
     };
   },
 };
@@ -542,19 +563,21 @@ export const tritono = {
       if (!okSpell([...vNotes, sub, sNotes[1]])) return null;
       const lab = tdeg === 0 ? 'subV7' : `subV7/${ROM[tdeg]}`;
       const sound = () => audio.playSeq([midisOf(sub, ['1', '3', '5', 'b7']), midisOf(target.root, target.chord.intervals)], { step: 1 });
+      const neck = () => Gt.tritoneNeck(V, sub);
+      const neckCap = () => `${CH(V, '7')} y ${CH(sub, '7')} con 7ma y 3ra arriba: comparten esas dos notas; el bajo pasa a la 5ta cuerda, un traste adelante`;
       const explain = () => `${CH(sub, '7')} reemplaza a ${CH(V, '7')}: sus raíces están a un tritono y comparten el tritono ${N(vNotes[1])}–${N(vNotes[3])} (en ${CH(sub, '7')}: ${N(sNotes[1])}–${N(sNotes[3])}). Resuelve bajando medio tono a ${CH(target.root, target.chord)}. Escala: Lidio dominante (9, #11, 13), mismas notas que ${N(V)} alterada.`;
       if (tipo === 'subv' || tipo === 'tonalidad') {
         const cands = uniqueBy([sub, V, transpose(V, 'b2'), transpose(V, '4'), transpose(target.root, '2'), transpose(V, 'b7')].filter((n) => okSpell([n])), notePc);
         const opts = shuffle(cands.slice(0, 5)).map((n) => ({ id: `${n.l}${n.a}`, label: () => CH(n, '7') }));
         const prompt = tipo === 'subv' ? () => `¿Cuál es el subV7 de <b>${CH(V, '7')}</b>?` : () => `En <b>${keyName(k)}</b>, ¿cuál es el <b>${lab}</b>?`;
-        return { kicker: 'Sustituto tritonal', prompt, sub: tipo === 'subv' ? () => `${CH(V, '7')} resuelve en ${CH(target.root, target.chord)}.` : '', ...choice(opts, `${sub.l}${sub.a}`), answerText: () => CH(sub, '7'), explain, sound };
+        return { kicker: 'Sustituto tritonal', prompt, sub: tipo === 'subv' ? () => `${CH(V, '7')} resuelve en ${CH(target.root, target.chord)}.` : '', ...choice(opts, `${sub.l}${sub.a}`), answerText: () => CH(sub, '7'), explain, sound, neck, neckCap };
       }
       if (tipo === 'tritono') {
         const want = [vNotes[1], vNotes[3]];
         const alt = [sNotes[3], sNotes[1]];
         return {
           kicker: 'Tritono compartido', prompt: () => `¿Qué tritono comparten <b>${CH(V, '7')}</b> y <b>${CH(sub, '7')}</b>?`, sub: '2 notas: la 3ra y la 7ma de cada acorde.',
-          kind: 'notes', slots: 2, ordered: false, answer: want, answerText: () => `${NL(want)} (= ${NL(alt)})`, explain, sound,
+          kind: 'notes', slots: 2, ordered: false, answer: want, answerText: () => `${NL(want)} (= ${NL(alt)})`, explain, sound, neck, neckCap,
           check: (resp) => {
             const has = (list) => list.every((w) => resp.some((n) => sameNote(n, w)));
             if (has(want) || has(alt)) return { ok: true };
@@ -565,7 +588,7 @@ export const tritono = {
         };
       }
       const opts = ['lidio-dom', 'mixolidio', 'alterada', 'frigio-dom', 'dorico', 'lidio'].map((id) => ({ id, label: scaleById(id).name }));
-      return { kicker: 'Escala', prompt: () => `¿Qué escala se usa sobre el subV7?`, sub: () => `Ej.: ${CH(sub, '7')} → ${CH(target.root, target.chord)}.`, ...choice(opts, 'lidio-dom'), answerText: 'Lidio dominante', explain, sound };
+      return { kicker: 'Escala', prompt: () => `¿Qué escala se usa sobre el subV7?`, sub: () => `Ej.: ${CH(sub, '7')} → ${CH(target.root, target.chord)}.`, ...choice(opts, 'lidio-dom'), answerText: 'Lidio dominante', explain, sound, neck, neckCap };
     };
   },
 };
@@ -598,13 +621,15 @@ export const intercambio = {
       const sc = scaleById(b.scale);
       const ds = diatonic(JON).map((d) => ({ ...d, root: transpose(k, JON[d.deg]) }));
       const sound = () => audio.playSeq([midisOf(k, ['1', '3', '5', '7']), midisOf(r, c.intervals)], { step: 1 });
+      const neck = () => Gt.chordNeck(r, c);
+      const neckCap = () => `${CH(r, c)} (${b.roman} prestado) en una posición`;
       const explain = () => `${b.roman} = ${CH(r, c)} (${NL(notes)}), tomado de ${N(k)} ${scaleLabel(scaleById(b.from))}${sources.length > 1 ? ` (también está en ${sources.filter((x) => x !== b.from).map(modeLabel).join(', ')})` : ''}. Escala sugerida: ${sc.name}.${b.note ? ` ${b.note}` : ''}`;
       if (tipo === 'armar') {
         const same = ds[b.step];
         const cands = uniqueBy([{ r, c }, { r: same.root, c: same.chord }, ...['maj7', 'm7', '7', 'm7b5', 'm6'].map((id) => ({ r, c: chordById(id) }))], (x) => `${x.r.l}${x.r.a}${x.c.id}`)
           .filter((x) => !(x.r.l === r.l && x.r.a === r.a && x.c.id === c.id) || x === undefined);
         const opts = shuffle([{ r, c }, ...shuffle(cands).slice(0, 4)]).map((x) => ({ id: `${x.r.l}${x.r.a}${x.c.id}`, label: () => CH(x.r, x.c) }));
-        return { kicker: 'Acorde prestado', prompt: () => `En <b>${keyName(k)}</b>, ¿cuál es el <b>${b.roman}</b>?`, sub: 'Acorde prestado de un modo paralelo.', ...choice(opts, `${r.l}${r.a}${c.id}`), answerText: () => CH(r, c), explain, sound };
+        return { kicker: 'Acorde prestado', prompt: () => `En <b>${keyName(k)}</b>, ¿cuál es el <b>${b.roman}</b>?`, sub: 'Acorde prestado de un modo paralelo.', ...choice(opts, `${r.l}${r.a}${c.id}`), answerText: () => CH(r, c), explain, sound, neck, neckCap };
       }
       if (tipo === 'origen') {
         const wrong = shuffle(MODES_SRC.filter((x) => !sources.includes(x))).slice(0, 4);
@@ -612,18 +637,18 @@ export const intercambio = {
         const opts = shuffle([b.from, ...extra, ...wrong]).map((id) => ({ id, label: () => modeLabel(id) }));
         return {
           kicker: 'Origen', prompt: () => `En <b>${keyName(k)}</b>, <b>${CH(r, c)}</b> (${b.roman}) viene de…`, wide: true,
-          ...choice(opts, b.from), answerText: () => sources.map(modeLabel).join(' o '), explain, sound,
+          ...choice(opts, b.from), answerText: () => sources.map(modeLabel).join(' o '), explain, sound, neck, neckCap,
           check: (id) => ({ ok: sources.includes(id) }),
         };
       }
       if (tipo === 'cual') {
         const dia = shuffle(ds.slice(0, 6)).slice(0, 3);
         const opts = shuffle([{ id: 'b', label: () => CH(r, c) }, ...dia.map((d) => ({ id: String(d.deg), label: () => CH(d.root, d.chord) }))]);
-        return { kicker: 'Prestado', prompt: () => `En <b>${keyName(k)}</b>, ¿cuál de estos acordes es prestado?`, ...choice(opts, 'b'), answerText: () => CH(r, c), explain, sound };
+        return { kicker: 'Prestado', prompt: () => `En <b>${keyName(k)}</b>, ¿cuál de estos acordes es prestado?`, ...choice(opts, 'b'), answerText: () => CH(r, c), explain, sound, neck, neckCap };
       }
       const pool = ['dorico', 'lidio', 'lidio-dom', 'locrio-n2', 'mixolidio', 'eolico', 'locrio', 'menor-melodica', 'jonico', 'frigio'].filter((x) => x !== b.scale && x !== ALSO_OK[b.roman]);
       const opts = shuffle([b.scale, ...shuffle(pool).slice(0, 4)]).map((id) => ({ id, label: scaleById(id).name }));
-      return { kicker: 'Escala', prompt: () => `Sobre <b>${b.roman}</b> prestado (${CH(r, c)} en ${keyName(k)}), ¿qué escala corresponde?`, ...choice(opts, b.scale), answerText: sc.name, explain, sound };
+      return { kicker: 'Escala', prompt: () => `Sobre <b>${b.roman}</b> prestado (${CH(r, c)} en ${keyName(k)}), ¿qué escala corresponde?`, ...choice(opts, b.scale), answerText: sc.name, explain, sound, neck, neckCap };
     };
   },
 };
@@ -686,6 +711,7 @@ export const impro = {
         ...choice(opts, c.scale), answerText: () => `${N(c.root)} ${lc(main.name)}`,
         explain: () => `${c.fn}. ${N(c.root)} ${main.name}: ${NL(spellAll(c.root, main.intervals))}. Tensiones: ${tensions.join(', ') || '—'}${avoid.length ? `; a evitar: ${avoid.join(', ')}` : ''}.${c.alt.length ? ` También: ${c.alt.map((x) => scaleById(x).name).join(', ')}.` : ''}`,
         sound: () => audio.playSeq(midisOf(c.root, [...main.intervals, '8'], 55), { step: 0.25 }),
+        neck: () => Gt.scaleOnChord(c.root, main, c.chord, avoid.map((x) => x.replace(/^(b|#)?(9)$/, '$12').replace(/^(b|#)?(11)$/, '$14').replace(/^(b|#)?(13)$/, '$16'))), neckCap: () => `${N(c.root)} ${lc(main.name)} sobre ${CH(c.root, c.chord)}: notas del acorde por color, tensiones en violeta`,
       };
     };
   },

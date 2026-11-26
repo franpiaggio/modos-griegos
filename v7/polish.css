@@ -272,3 +272,9 @@ details.ex-g { display: block; }
 .info-card figcaption b { color: var(--ink); }
 .ic-char i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #CE3468; margin: 0 4px 0 2px; }
 .viz-row > figure { min-width: min(100%, 230px); }
+/* v7: mástiles de guitarra en lecciones, correcciones y capítulos */
+.viz.neck { margin: 0 auto; }
+.viz-row > figure.neckf { flex: 1 1 100%; max-width: 640px; }
+.fb-neck { margin: 10px 0 2px; }
+.fb-neck .viz.neck { margin: 0; }
+.fb-neck figcaption, .neck-cap { font-size: 12px; color: var(--muted); margin-top: 2px; }

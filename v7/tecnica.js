@@ -1,5 +1,6 @@
 // Ejercitación técnica: metrónomo, tocar sobre un acorde fijo, ejercicios por objetivo y formación de acordes.
 import { store, prefs, onPrefs, toast, esc, ICON } from './ui.js';
+import * as Gt from './guitar.js';
 import { icon } from './icons.js';
 import * as audio from './audio.js';
 import {
@@ -11,7 +12,7 @@ import { createMetronome, METERS, defaultAccents, tapper, tempoName } from './te
 import { EXERCISES, MANOS, OBJETIVOS, OBJ_NAME, MANO_NAME } from './tecnica-ejercicios.js';
 import { parseTab, tabSvg, tabNotes } from './tecnica-tab.js';
 import { PROGS, progression, guideTones, tritone, keyRoot } from './tecnica-vi.js';
-import { fifths, keyboard, ROLE, roleOf, FN_COLOR, roleLegend } from './viz.js';
+import { fifths, ROLE, roleOf, FN_COLOR, roleLegend } from './viz.js';
 import { note as mkNote } from './theory.js';
 import {
   cagedShapes, CAGED_TYPES, triadVoicings, TRIAD_TYPES, TRIAD_SETS, dropVoicings, SEVENTH_TYPES, DROP2_SETS, DROP3_SETS,
@@ -746,11 +747,6 @@ function viCircle(P, mode) {
   }
   return fifths(names, minors, { marks, arrows, label: `Círculo de quintas: ${P.chords.map((c) => nn(c.root) + c.chord.sym).join(', ')}`, size: 240 });
 }
-// teclado de un acorde con colores por función (3ra y 7ma = notas guía)
-function viKeys(c) {
-  const r = notePc(c.root);
-  return keyboard(c.chord.intervals.map((iv, i) => ({ i: r + ivSemis(iv), label: nn(c.notes[i]), sub: iv, color: ROLE[roleOf(iv)] })), { label: `Notas de ${nn(c.root)}${c.chord.sym}` });
-}
 function viewVI() {
   const st = Object.assign({ root: 0, mode: 'mayor', prog: 'v-i', level: '7', bars: 1, set: 0, zone: 7, labels: 'interval', click: true }, store.get('tec.vi', {}));
   const save = () => store.set('tec.vi', st);
@@ -801,8 +797,7 @@ function viewVI() {
           <figure class="sm">${viCircle(P, st.mode)}<figcaption><span class="fn-key"><span><i style="background:${FN_COLOR.Dominante}"></i>V</span><span><i style="background:${FN_COLOR.Tónica}"></i>I</span>${II ? `<span><i style="background:${FN_COLOR.Subdominante}"></i>II</span>` : ''}</span> · el V cae una 5ta al I</figcaption></figure>
         </div>
         <div class="viz-row vi-kbs">
-          <figure>${viKeys(V)}<figcaption>${sym(V)}</figcaption></figure>
-          <figure>${viKeys(I)}<figcaption>${sym(I)}</figcaption></figure>
+          <figure class="neckf">${Gt.overlay(V.root, V.chord.intervals, I.root, I.chord.intervals, { title: `${sym(V)} y ${sym(I)} en el mástil`, guides: guideTones(V, I, st.mode).filter((g) => g.fromIv !== '1').map((g) => [g.fromIv, g.toIv]) })}<figcaption>Relleno: ${sym(V)}. Contorno: ${sym(I)} en la misma zona. ${st.level === '7' ? `Las líneas punteadas son las notas guía: la 3ra (naranja) y la 7ma (verde) del ${sym(V)} se mueven uno o dos trastes hasta su nota del ${sym(I)}.` : `La línea punteada es la sensible: la 3ra (naranja) del ${sym(V)} sube un traste a la tónica del ${sym(I)}.`}</figcaption></figure>
         </div>
         ${roleLegend([1, 3, 5, ...(st.level === '7' ? [7] : [])])}
         ${pairs.map(([t, list]) => `<h3>${t}</h3><ul class="vi-moves">${list.map((g) => `<li><span class="vi-mv"><b>${nn(g.from)}</b><small>${g.fromIv}</small><i aria-hidden="true">${g.fromIv === '1' && g.toIv === '1' ? '→' : g.semis > 0 ? '↗' : g.semis < 0 ? '↘' : '→'}</i><b>${nn(g.to)}</b><small>${g.toIv}</small></span><span class="vi-txt">${g.text}</span></li>`).join('')}</ul>`).join('')}

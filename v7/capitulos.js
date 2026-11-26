@@ -11,6 +11,7 @@ import {
 } from './logros.js';
 import * as motion from './motion.js';
 import { heroNeck, chapterIllus, TINT } from './illus.js';
+import * as Gt from './guitar.js';
 import { note, noteName, transpose, spellAll, scaleById, chordById, ivSemis, intervalBetween } from './theory.js';
 import { steps, clock, stack, ruler, fifths, roleLegend, roleOf, ROLE, FN_COLOR } from './viz.js';
 
@@ -89,6 +90,7 @@ function renderHome() {
 const nn = (n) => noteName(n, prefs.notation);
 const C = note(0), A = note(5);
 const fig = (svg, cap, cls = '') => `<figure class="${cls}">${svg}<figcaption>${cap}</figcaption></figure>`;
+const gfig = (svg, cap) => fig(svg, `<b>En la guitarra:</b> ${cap}`, 'neckf');
 function scaleSteps(root, id, mark = [], label = '') {
   const sc = scaleById(id);
   const names = spellAll(root, sc.intervals).map(nn);
@@ -115,25 +117,27 @@ function heroHtml(c) {
   const G = note(4), D = note(1);
   switch (c.id) {
     case 'pentatonica':
-      return fig(scaleSteps(C, 'penta-mayor'), `${nn(C)} pentatónica mayor: 1 2 3 5 6, sin semitonos`, 'wide') + fig(scaleSteps(A, 'penta-menor'), `${nn(A)} pentatónica menor: las mismas notas desde la relativa`, 'wide') + fig(scaleSteps(A, 'blues', [3]), `Escala de blues: suma la <b>b5</b> (blue note)`, 'wide');
+      return fig(scaleSteps(C, 'penta-mayor'), `${nn(C)} pentatónica mayor: 1 2 3 5 6, sin semitonos`, 'wide') + fig(scaleSteps(A, 'penta-menor'), `${nn(A)} pentatónica menor: las mismas notas desde la relativa`, 'wide') + fig(scaleSteps(A, 'blues', [3]), `Escala de blues: suma la <b>b5</b> (blue note)`, 'wide') + gfig(Gt.position(A, scaleById('blues').intervals, { mark: ['b5'] }), `${nn(A)} blues en la posición 1 (traste 5): la figura de caja de la pentatónica con la blue note en naranja.`);
     case 'acordes':
-      return fig(chordStack(C, 'mayor'), `${nn(C)}: 3M + 3m`, 'sm') + fig(chordStack(C, 'maj7'), `${nn(C)}maj7: tríada mayor + 7`, 'sm') + fig(chordStack(G, '7'), `${nn(G)}7: tríada mayor + b7`, 'sm');
+      return fig(chordStack(C, 'mayor'), `${nn(C)}: 3M + 3m`, 'sm') + fig(chordStack(C, 'maj7'), `${nn(C)}maj7: tríada mayor + 7`, 'sm') + fig(chordStack(G, '7'), `${nn(G)}7: tríada mayor + b7`, 'sm') + gfig(Gt.stacked(C, chordById('maj7').intervals, { s0: 6 }), `${nn(C)}maj7 por terceras, una nota por cuerda desde la 6ta: cada tercera cae en la cuerda siguiente.`) + gfig(Gt.chordNeck(C, chordById('maj7')), `el mismo arpegio en una posición completa: así se ve dentro de la figura del acorde.`);
     case 'tonal':
-      return fig(scaleSteps(C, 'jonico', [3, 6]), `${nn(C)} mayor: la pentatónica más la <b>4</b> y la <b>7</b>`, 'wide') + fig(circle({ label: 'Funciones en Do mayor', marks: [{ pos: 0, color: FN_COLOR.Tónica }, { pos: 11, color: FN_COLOR.Subdominante }, { pos: 1, color: FN_COLOR.Dominante }, { pos: 0, ring: 'in', color: FN_COLOR.Tónica }, { pos: 11, ring: 'in', color: FN_COLOR.Subdominante }, { pos: 1, ring: 'in', color: FN_COLOR.Tónica }] }), `<span class="fn-key">${Object.entries(FN_COLOR).map(([k, col]) => `<span><i style="background:${col}"></i>${k}</span>`).join('')}</span>`, 'sm');
+      return fig(scaleSteps(C, 'jonico', [3, 6]), `${nn(C)} mayor: la pentatónica más la <b>4</b> y la <b>7</b>`, 'wide') + fig(circle({ label: 'Funciones en Do mayor', marks: [{ pos: 0, color: FN_COLOR.Tónica }, { pos: 11, color: FN_COLOR.Subdominante }, { pos: 1, color: FN_COLOR.Dominante }, { pos: 0, ring: 'in', color: FN_COLOR.Tónica }, { pos: 11, ring: 'in', color: FN_COLOR.Subdominante }, { pos: 1, ring: 'in', color: FN_COLOR.Tónica }] }), `<span class="fn-key">${Object.entries(FN_COLOR).map(([k, col]) => `<span><i style="background:${col}"></i>${k}</span>`).join('')}</span>`, 'sm') + gfig(Gt.rootsNeck(C, [['1', 'I', 'Tónica'], ['2', 'II', 'Subdominante'], ['3', 'III', 'Tónica'], ['4', 'IV', 'Subdominante'], ['5', 'V', 'Dominante'], ['6', 'VI', 'Tónica'], ['7', 'VII', 'Dominante']].map(([iv, label, fn]) => ({ iv, label, color: FN_COLOR[fn] }))), `las fundamentales de los 7 acordes de ${nn(C)} mayor alrededor del traste 8, con el color de su función.`);
     case 'modos': {
       const dor = scaleById('dorico');
       const ns = spellAll(D, dor.intervals).map(nn);
-      return fig(clock(dor.intervals.map((iv, i) => ({ k: ivSemis(iv), name: ns[i], iv, color: i === 0 ? ROLE[1] : iv === '6' ? ROLE[3] : '#8a8a93' })), { label: `${nn(D)} dórico`, size: 210 }), `${nn(D)} dórico: las notas de ${nn(C)} mayor desde ${nn(D)}. Lo distingue el <b>6</b>`, 'sm');
+      return fig(clock(dor.intervals.map((iv, i) => ({ k: ivSemis(iv), name: ns[i], iv, color: i === 0 ? ROLE[1] : iv === '6' ? ROLE[3] : '#8a8a93' })), { label: `${nn(D)} dórico`, size: 210 }), `${nn(D)} dórico: las notas de ${nn(C)} mayor desde ${nn(D)}. Lo distingue el <b>6</b>`, 'sm') + gfig(Gt.position(D, scaleById('dorico').intervals, { mark: ['6'], label: 'iv' }), `${nn(D)} dórico con la tónica en la 5ta cuerda: la nota característica (6) en naranja.`);
     }
     case 'extensiones': {
       const ivs = ['1', '3', '5', '7', '9'];
       const ns = spellAll(C, ivs).map(nn);
-      return fig(stack(ivs.map((iv, i) => ({ name: ns[i], iv })), ns.slice(1).map((x, i) => intervalBetween(spellAll(C, ivs)[i], spellAll(C, ivs)[i + 1]).id), { label: `${nn(C)}maj9 por terceras` }), `Desde la 3ra de ${nn(C)}maj7 sale ${ns[1]}m7 (${ns.slice(1).join(' ')}): suena <b>${nn(C)}maj9</b>`, 'sm');
+      return fig(stack(ivs.map((iv, i) => ({ name: ns[i], iv })), ns.slice(1).map((x, i) => intervalBetween(spellAll(C, ivs)[i], spellAll(C, ivs)[i + 1]).id), { label: `${nn(C)}maj9 por terceras` }), `Desde la 3ra de ${nn(C)}maj7 sale ${ns[1]}m7 (${ns.slice(1).join(' ')}): suena <b>${nn(C)}maj9</b>`, 'sm') + gfig(Gt.overlay(C, chordById('maj7').intervals, note(2), chordById('m7').intervals, { labelB: ['3', '5', '7', '9'], colorB: ROLE.t }), `${nn(C)}maj7 en una posición; los números muestran qué es cada nota de ${ns[1]}m7 sobre ${nn(C)}: 3, 5 y 7 ya están; la 9 (contorno) es la nota nueva.`);
     }
     case 'final': {
       const mix = scaleById('mixolidio').intervals;
-      return fig(roleClock(G, mix, chordById('7').intervals, `${nn(G)} mixolidio sobre ${nn(G)}7`), `Sobre cada acorde: notas del acorde para apoyar, tensiones para dar color`, 'sm') + roleLegend([1, 3, 5, 7, 't']);
+      return fig(roleClock(G, mix, chordById('7').intervals, `${nn(G)} mixolidio sobre ${nn(G)}7`), `Sobre cada acorde: notas del acorde para apoyar, tensiones para dar color`, 'sm') + gfig(Gt.scaleOnChord(G, scaleById('mixolidio'), chordById('7'), ['4']), `${nn(G)} mixolidio sobre ${nn(G)}7: apoyá en las de color, usá las violetas de paso.`) + roleLegend([1, 3, 5, 7, 't']);
     }
+    case 'tecnica':
+      return gfig(Gt.neck([6, 5, 4, 3, 2, 1].flatMap((s) => [5, 6, 7, 8].map((f, i) => ({ s, f, label: String(i + 1), color: i === 0 ? '#1E1E1E' : '#6b6b75' }))), { label: 'Cromático 1-2-3-4 en el mástil' }), `el cromático 1-2-3-4 (araña): un dedo por traste, del 5 al 8, en las seis cuerdas. Los números son los dedos.`);
     default: return '';
   }
 }

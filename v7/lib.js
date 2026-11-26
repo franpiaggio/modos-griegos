@@ -4,12 +4,13 @@ import {
   build, SCALES, CHORDS, FAMILIES, CHORD_GROUPS, ARP_GROUPS, scalesOf, ROOT_PCS, rootLabel, noteName, PREF, midiOf,
   diatonic, IMPRO, pentatonicsIn, superimpositions, scaleById, transpose, ivSemis, EXTRA_SCALES, MAJOR_FUNCTIONS, intervalBetween,
 } from './theory.js';
-import { steps, clock, stack, keyboard, roleLegend, roleOf, ROLE } from './viz.js';
+import { steps, clock, stack, roleLegend, roleOf, ROLE } from './viz.js';
 import { sheetSvg, layoutLegend, boxOf } from './render.js';
 import * as audio from './audio.js';
 import { pieceSvg, pngBlob, save, printPiece, zipAll, slug } from './export.js';
 import { $, store, prefs, onPrefs, toast, esc, setPref } from './ui.js';
 import { unlockedInfo, CHAPTERS, prevGate } from './logros.js';
+import * as Gt from './guitar.js';
 import { icon } from './icons.js';
 import * as motion from './motion.js';
 let drawn = false;
@@ -166,10 +167,9 @@ function renderInfo() {
     rows.push(`<p class="ic-note">${esc(fam.info)}</p>`);
   } else {
     const gaps = spelled.slice(1).map((x, i) => intervalBetween(spelled[i], x).id);
-    const kb = m.intervals.map((iv, i) => ({ i: state.root + ivSemis(iv) + (ivSemis(iv) < 0 ? 12 : 0), label: notes[i], sub: iv, color: ROLE[roleOf(iv)] }));
     rows.push(`<div class="viz-row">
       <figure class="sm">${stack(m.intervals.map((iv, i) => ({ name: notes[i], iv })), gaps, { label: `${opts.display} apilado por terceras` })}<figcaption>Apilado por terceras</figcaption></figure>
-      <figure>${keyboard(kb, { label: `Notas de ${opts.display} en el teclado` })}<figcaption>En el teclado</figcaption></figure>
+      <figure class="neckf">${(() => { const s = [5, 6].map((x) => ({ s: x, f: Gt.fretOf(state.root, x, 0) })).sort((a, b) => a.f - b.f)[0]; return Gt.oneString(data.root, m.intervals, { s: s.s, startFret: s.f, inOctave: true, label: 'iv', color: (iv) => ROLE[roleOf(iv)], title: `${opts.display} en una cuerda` }); })()}<figcaption>En una sola cuerda: la distancia de cada nota a la tónica, en trastes${m.intervals.some((iv) => /9|11|13/.test(iv)) ? ' (las 9, 11 y 13 se muestran dentro de la octava)' : ''}</figcaption></figure>
     </div>${roleLegend([...new Set(m.intervals.map(roleOf))])}`);
     const tones = new Set(m.intervals.map((iv) => (state.root + ivSemis(iv)) % 12));
     const containing = SCALES.filter((s) => {
