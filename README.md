@@ -62,3 +62,21 @@ https://franpiaggio.github.io/modos-griegos/v5/
 - **Correcciones del material**: escala de blues (blue note en azul) y pentatónica mixolidia (nota mixolidia en verde) con leyenda de colores en la hoja; menor armónica y melódica marcan la tónica menor y la nota alterada; posiciones siempre desde la más grave; arpegios solo con las notas del acorde, posiciones con la tónica en el dedo 1, sin extensiones por ahora.
 - **Teoría** reescrita: intervalos (distancia, género, tipos), escalas (escala vs. tonalidad, las 4 escalas principales con esquema T/st, armado paso a paso), acordes (tríadas y tétradas) y esquema de la escala cromática para arpegios.
 - **Técnica**: nuevo ejercicio de relaciones V–I, I–V–I y II–V–I (mayor y menor) con notas guía, loop con metrónomo y qué tocar sobre cada acorde.
+
+## Versión 6 (`v6/`): curso VISUALIZAR
+
+https://franpiaggio.github.io/modos-griegos/v6/
+
+Capítulos reorganizados según el temario del curso **VISUALIZAR** (guitarra orientada a la visualización del diapasón):
+
+1. El diapasón y la escala pentatónica
+2. Acordes, arpegios y escala
+3. Sistema tonal: escala mayor, menor y círculo de quintas
+4. Modos griegos
+5. Técnica (abierta desde el inicio, se practica en paralelo)
+6. Extensiones de arpegios y escalas (superposición)
+7. Trabajo final de improvisación (blues, rock, balada, metal y un género a elección)
+
+- Cada capítulo lista sus **temas** en orden; cada tema enlaza la teoría, las escalas y arpegios de Información y las herramientas de Técnica que lo trabajan.
+- Los capítulos teóricos se completan con un desafío (80 %). Técnica y el trabajo final se completan marcando cada tema como hecho.
+- El progreso de la v6 se guarda aparte del de la v5.
