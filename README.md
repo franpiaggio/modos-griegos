@@ -80,3 +80,10 @@ Capítulos reorganizados según el temario del curso **VISUALIZAR** (guitarra or
 - Cada capítulo lista sus **temas** en orden; cada tema enlaza la teoría, las escalas y arpegios de Información y las herramientas de Técnica que lo trabajan.
 - Los capítulos teóricos se completan con un desafío (80 %). Técnica y el trabajo final se completan marcando cada tema como hecho.
 - El progreso de la v6 se guarda aparte del de la v5.
+
+## Versión 7 (`v7/`): ilustraciones y guitarra en mano
+
+https://franpiaggio.github.io/modos-griegos/v7/
+
+- **Ilustraciones propias** (SVG, sin texto, en `v7/illus.js`): un mástil en la portada con la pentatónica menor (posición 1 llena, posición 2 en contorno) y un dibujo por capítulo, en la lista y en la cabecera de cada capítulo. Cada capítulo tiene su color.
+- **Guitarra en mano** (botón en la barra superior o en Configuración): la pantalla no se apaga (Wake Lock), la letra y los botones se agrandan para leer a distancia, y en cada capítulo se pasa de tema con las flechas o con un pedal de pasar páginas (PageDown/PageUp); Enter marca el tema como hecho.
